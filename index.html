@@ -42,6 +42,52 @@
             animation: colorShift 60s infinite linear;
         }
 
+        /* Animate gradient stops instead of fill */
+        .iris-gradient-stop-1 { animation: colorShift1 60s infinite linear; }
+        .iris-gradient-stop-2 { animation: colorShift2 60s infinite linear; }
+        .iris-gradient-stop-3 { animation: colorShift3 60s infinite linear; }
+        .iris-gradient-stop-4 { animation: colorShift4 60s infinite linear; }
+
+        @keyframes colorShift1 {
+            0% { stop-color: #4CAF50; }      /* Light Green */
+            16.67% { stop-color: #D2691E; }  /* Saddle Brown */
+            33.33% { stop-color: #6495ED; }  /* Cornflower Blue */
+            50% { stop-color: #FFB347; }     /* Light Orange */
+            66.67% { stop-color: #F08080; }  /* Light Coral */
+            83.33% { stop-color: #FFB6C1; }  /* Light Pink */
+            100% { stop-color: #4CAF50; }    /* Back to Light Green */
+        }
+
+        @keyframes colorShift2 {
+            0% { stop-color: #388E3C; }      /* Medium Green */
+            16.67% { stop-color: #A0522D; }  /* Sienna */
+            33.33% { stop-color: #4169E1; }  /* Royal Blue */
+            50% { stop-color: #FF8C00; }     /* Dark Orange */
+            66.67% { stop-color: #DC143C; }  /* Crimson */
+            83.33% { stop-color: #FF69B4; }  /* Hot Pink */
+            100% { stop-color: #388E3C; }    /* Back to Medium Green */
+        }
+
+        @keyframes colorShift3 {
+            0% { stop-color: #2E7D32; }      /* Dark Green */
+            16.67% { stop-color: #8B4513; }  /* Saddle Brown */
+            33.33% { stop-color: #1E90FF; }  /* Dodge Blue */
+            50% { stop-color: #FF7F00; }     /* Orange */
+            66.67% { stop-color: #B22222; }  /* Fire Brick */
+            83.33% { stop-color: #C71585; }  /* Medium Violet Red */
+            100% { stop-color: #2E7D32; }    /* Back to Dark Green */
+        }
+
+        @keyframes colorShift4 {
+            0% { stop-color: #1B5E20; }      /* Very Dark Green */
+            16.67% { stop-color: #654321; }  /* Dark Brown */
+            33.33% { stop-color: #000080; }  /* Navy */
+            50% { stop-color: #CC5500; }     /* Burnt Orange */
+            66.67% { stop-color: #800020; }  /* Burgundy */
+            83.33% { stop-color: #8B008B; }  /* Dark Magenta */
+            100% { stop-color: #1B5E20; }    /* Back to Very Dark Green */
+        }
+
         @keyframes colorShift {
             0% { fill: #228B22; }      /* Green */
             16.67% { fill: #8B4513; }  /* Brown */
@@ -61,20 +107,20 @@
             <!-- Gradients and filters for realistic iris -->
             <defs>
                 <radialGradient id="irisGradient1" cx="0.3" cy="0.3" r="0.7">
-                    <stop offset="0%" stop-color="#4CAF50" stop-opacity="0.8"/>
-                    <stop offset="30%" stop-color="#388E3C" stop-opacity="0.6"/>
-                    <stop offset="70%" stop-color="#2E7D32" stop-opacity="0.4"/>
-                    <stop offset="100%" stop-color="#1B5E20" stop-opacity="0.8"/>
+                    <stop class="iris-gradient-stop-1" offset="0%" stop-color="#4CAF50" stop-opacity="0.8"/>
+                    <stop class="iris-gradient-stop-2" offset="30%" stop-color="#388E3C" stop-opacity="0.6"/>
+                    <stop class="iris-gradient-stop-3" offset="70%" stop-color="#2E7D32" stop-opacity="0.4"/>
+                    <stop class="iris-gradient-stop-4" offset="100%" stop-color="#1B5E20" stop-opacity="0.8"/>
                 </radialGradient>
                 <radialGradient id="irisGradient2" cx="0.7" cy="0.4" r="0.6">
-                    <stop offset="0%" stop-color="#66BB6A" stop-opacity="0.6"/>
-                    <stop offset="50%" stop-color="#43A047" stop-opacity="0.4"/>
-                    <stop offset="100%" stop-color="#2E7D32" stop-opacity="0.7"/>
+                    <stop class="iris-gradient-stop-1" offset="0%" stop-color="#66BB6A" stop-opacity="0.6"/>
+                    <stop class="iris-gradient-stop-2" offset="50%" stop-color="#43A047" stop-opacity="0.4"/>
+                    <stop class="iris-gradient-stop-4" offset="100%" stop-color="#2E7D32" stop-opacity="0.7"/>
                 </radialGradient>
                 <radialGradient id="irisGradient3" cx="0.5" cy="0.7" r="0.5">
-                    <stop offset="0%" stop-color="#81C784" stop-opacity="0.5"/>
-                    <stop offset="60%" stop-color="#4CAF50" stop-opacity="0.3"/>
-                    <stop offset="100%" stop-color="#388E3C" stop-opacity="0.6"/>
+                    <stop class="iris-gradient-stop-1" offset="0%" stop-color="#81C784" stop-opacity="0.5"/>
+                    <stop class="iris-gradient-stop-2" offset="60%" stop-color="#4CAF50" stop-opacity="0.3"/>
+                    <stop class="iris-gradient-stop-3" offset="100%" stop-color="#388E3C" stop-opacity="0.6"/>
                 </radialGradient>
                 <filter id="irisBlur" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
@@ -113,20 +159,20 @@
             <!-- Gradients and filters for realistic iris -->
             <defs>
                 <radialGradient id="irisGradient1Right" cx="0.3" cy="0.3" r="0.7">
-                    <stop offset="0%" stop-color="#4CAF50" stop-opacity="0.8"/>
-                    <stop offset="30%" stop-color="#388E3C" stop-opacity="0.6"/>
-                    <stop offset="70%" stop-color="#2E7D32" stop-opacity="0.4"/>
-                    <stop offset="100%" stop-color="#1B5E20" stop-opacity="0.8"/>
+                    <stop class="iris-gradient-stop-1" offset="0%" stop-color="#4CAF50" stop-opacity="0.8"/>
+                    <stop class="iris-gradient-stop-2" offset="30%" stop-color="#388E3C" stop-opacity="0.6"/>
+                    <stop class="iris-gradient-stop-3" offset="70%" stop-color="#2E7D32" stop-opacity="0.4"/>
+                    <stop class="iris-gradient-stop-4" offset="100%" stop-color="#1B5E20" stop-opacity="0.8"/>
                 </radialGradient>
                 <radialGradient id="irisGradient2Right" cx="0.7" cy="0.4" r="0.6">
-                    <stop offset="0%" stop-color="#66BB6A" stop-opacity="0.6"/>
-                    <stop offset="50%" stop-color="#43A047" stop-opacity="0.4"/>
-                    <stop offset="100%" stop-color="#2E7D32" stop-opacity="0.7"/>
+                    <stop class="iris-gradient-stop-1" offset="0%" stop-color="#66BB6A" stop-opacity="0.6"/>
+                    <stop class="iris-gradient-stop-2" offset="50%" stop-color="#43A047" stop-opacity="0.4"/>
+                    <stop class="iris-gradient-stop-4" offset="100%" stop-color="#2E7D32" stop-opacity="0.7"/>
                 </radialGradient>
                 <radialGradient id="irisGradient3Right" cx="0.5" cy="0.7" r="0.5">
-                    <stop offset="0%" stop-color="#81C784" stop-opacity="0.5"/>
-                    <stop offset="60%" stop-color="#4CAF50" stop-opacity="0.3"/>
-                    <stop offset="100%" stop-color="#388E3C" stop-opacity="0.6"/>
+                    <stop class="iris-gradient-stop-1" offset="0%" stop-color="#81C784" stop-opacity="0.5"/>
+                    <stop class="iris-gradient-stop-2" offset="60%" stop-color="#4CAF50" stop-opacity="0.3"/>
+                    <stop class="iris-gradient-stop-3" offset="100%" stop-color="#388E3C" stop-opacity="0.6"/>
                 </radialGradient>
                 <filter id="irisBlurRight" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
