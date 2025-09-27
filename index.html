@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eyes</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .eyes-container {
+            display: flex;
+            gap: 20vw;
+            align-items: center;
+        }
+
+        .eye {
+            width: 200px;
+            height: 120px;
+            cursor: pointer;
+            transition: transform 0.1s ease-out;
+        }
+
+        .eye.blinking {
+            transform: scaleY(0.1);
+        }
+
+        .iris {
+            transition: transform 1.5s ease-out;
+        }
+
+        .iris-main {
+            animation: colorShift 60s infinite linear;
+        }
+
+        @keyframes colorShift {
+            0% { fill: #228B22; }      /* Green */
+            16.67% { fill: #8B4513; }  /* Brown */
+            33.33% { fill: #4169E1; }  /* Blue */
+            50% { fill: #FF8C00; }     /* Orange */
+            66.67% { fill: #DC143C; }  /* Red */
+            83.33% { fill: #FF69B4; }  /* Pink */
+            100% { fill: #228B22; }    /* Back to Green */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="eyes-container">
+        <!-- Left Eye -->
+        <svg class="eye" viewBox="0 0 200 120">
+            <!-- Gradients and filters for realistic iris -->
+            <defs>
+                <radialGradient id="irisGradient1" cx="0.3" cy="0.3" r="0.7">
+                    <stop offset="0%" stop-color="#4CAF50" stop-opacity="0.8"/>
+                    <stop offset="30%" stop-color="#388E3C" stop-opacity="0.6"/>
+                    <stop offset="70%" stop-color="#2E7D32" stop-opacity="0.4"/>
+                    <stop offset="100%" stop-color="#1B5E20" stop-opacity="0.8"/>
+                </radialGradient>
+                <radialGradient id="irisGradient2" cx="0.7" cy="0.4" r="0.6">
+                    <stop offset="0%" stop-color="#66BB6A" stop-opacity="0.6"/>
+                    <stop offset="50%" stop-color="#43A047" stop-opacity="0.4"/>
+                    <stop offset="100%" stop-color="#2E7D32" stop-opacity="0.7"/>
+                </radialGradient>
+                <radialGradient id="irisGradient3" cx="0.5" cy="0.7" r="0.5">
+                    <stop offset="0%" stop-color="#81C784" stop-opacity="0.5"/>
+                    <stop offset="60%" stop-color="#4CAF50" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#388E3C" stop-opacity="0.6"/>
+                </radialGradient>
+                <filter id="irisBlur" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
+                </filter>
+                <filter id="irisBlur2" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="2"/>
+                </filter>
+            </defs>
+            <!-- Eye white (outer oval) -->
+            <ellipse class="eye-white" cx="100" cy="60" rx="95" ry="55" fill="white" stroke="#ddd" stroke-width="2"/>
+
+            <!-- Green iris -->
+            <g class="iris">
+                <!-- Base iris with color-changing gradient -->
+                <ellipse class="iris-main" cx="100" cy="60" rx="35" ry="35" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
+                <!-- Overlapping gradient clouds for texture -->
+                <ellipse cx="95" cy="55" rx="28" ry="28" fill="url(#irisGradient1)" filter="url(#irisBlur)"/>
+                <ellipse cx="105" cy="58" rx="25" ry="25" fill="url(#irisGradient2)" filter="url(#irisBlur)"/>
+                <ellipse cx="100" cy="65" rx="22" ry="22" fill="url(#irisGradient3)" filter="url(#irisBlur2)"/>
+                <!-- Additional texture layers -->
+                <ellipse cx="92" cy="62" rx="15" ry="15" fill="url(#irisGradient1)" filter="url(#irisBlur2)" opacity="0.4"/>
+                <ellipse cx="108" cy="55" rx="18" ry="18" fill="url(#irisGradient2)" filter="url(#irisBlur)" opacity="0.5"/>
+            </g>
+
+            <!-- Black pupil -->
+            <g class="iris">
+                <ellipse cx="100" cy="60" rx="15" ry="15" fill="#000"/>
+                <!-- Lens flare inside pupil -->
+                <ellipse cx="95" cy="55" rx="3" ry="4" fill="rgba(255,255,255,0.9)"/>
+                <ellipse cx="92" cy="52" rx="1.5" ry="1.5" fill="rgba(255,255,255,0.7)"/>
+            </g>
+        </svg>
+
+        <!-- Right Eye -->
+        <svg class="eye" viewBox="0 0 200 120">
+            <!-- Gradients and filters for realistic iris -->
+            <defs>
+                <radialGradient id="irisGradient1Right" cx="0.3" cy="0.3" r="0.7">
+                    <stop offset="0%" stop-color="#4CAF50" stop-opacity="0.8"/>
+                    <stop offset="30%" stop-color="#388E3C" stop-opacity="0.6"/>
+                    <stop offset="70%" stop-color="#2E7D32" stop-opacity="0.4"/>
+                    <stop offset="100%" stop-color="#1B5E20" stop-opacity="0.8"/>
+                </radialGradient>
+                <radialGradient id="irisGradient2Right" cx="0.7" cy="0.4" r="0.6">
+                    <stop offset="0%" stop-color="#66BB6A" stop-opacity="0.6"/>
+                    <stop offset="50%" stop-color="#43A047" stop-opacity="0.4"/>
+                    <stop offset="100%" stop-color="#2E7D32" stop-opacity="0.7"/>
+                </radialGradient>
+                <radialGradient id="irisGradient3Right" cx="0.5" cy="0.7" r="0.5">
+                    <stop offset="0%" stop-color="#81C784" stop-opacity="0.5"/>
+                    <stop offset="60%" stop-color="#4CAF50" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#388E3C" stop-opacity="0.6"/>
+                </radialGradient>
+                <filter id="irisBlurRight" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
+                </filter>
+                <filter id="irisBlur2Right" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="2"/>
+                </filter>
+            </defs>
+            <!-- Eye white (outer oval) -->
+            <ellipse class="eye-white" cx="100" cy="60" rx="95" ry="55" fill="white" stroke="#ddd" stroke-width="2"/>
+
+            <!-- Green iris -->
+            <g class="iris">
+                <!-- Base iris with color-changing gradient -->
+                <ellipse class="iris-main" cx="100" cy="60" rx="35" ry="35" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
+                <!-- Overlapping gradient clouds for texture -->
+                <ellipse cx="95" cy="55" rx="28" ry="28" fill="url(#irisGradient1Right)" filter="url(#irisBlurRight)"/>
+                <ellipse cx="105" cy="58" rx="25" ry="25" fill="url(#irisGradient2Right)" filter="url(#irisBlurRight)"/>
+                <ellipse cx="100" cy="65" rx="22" ry="22" fill="url(#irisGradient3Right)" filter="url(#irisBlur2Right)"/>
+                <!-- Additional texture layers -->
+                <ellipse cx="92" cy="62" rx="15" ry="15" fill="url(#irisGradient1Right)" filter="url(#irisBlur2Right)" opacity="0.4"/>
+                <ellipse cx="108" cy="55" rx="18" ry="18" fill="url(#irisGradient2Right)" filter="url(#irisBlurRight)" opacity="0.5"/>
+            </g>
+
+            <!-- Black pupil -->
+            <g class="iris">
+                <ellipse cx="100" cy="60" rx="15" ry="15" fill="#000"/>
+                <!-- Lens flare inside pupil -->
+                <ellipse cx="95" cy="55" rx="3" ry="4" fill="rgba(255,255,255,0.9)"/>
+                <ellipse cx="92" cy="52" rx="1.5" ry="1.5" fill="rgba(255,255,255,0.7)"/>
+            </g>
+        </svg>
+    </div>
+
+    <script>
+        function randomBlink() {
+            const eyes = document.querySelectorAll('.eye');
+
+            // Add blink class
+            eyes.forEach(eye => eye.classList.add('blinking'));
+
+            // Remove blink class after 100ms (blink duration)
+            setTimeout(() => {
+                eyes.forEach(eye => eye.classList.remove('blinking'));
+            }, 100);
+
+            // Schedule next blink randomly between 4-20 seconds
+            const nextBlinkDelay = Math.random() * 16000 + 4000; // 4000ms to 20000ms
+            setTimeout(randomBlink, nextBlinkDelay);
+        }
+
+        function randomEyeMovement() {
+            const irisGroups = document.querySelectorAll('.iris');
+
+            // Generate random position within eye bounds
+            const maxX = 50; // Maximum horizontal movement
+            const maxY = 10; // Maximum vertical movement
+            const randomX = (Math.random() - 0.5) * 2 * maxX; // -50 to 50
+            const randomY = (Math.random() - 0.5) * 2 * maxY; // -10 to 10
+
+            // Apply movement to all iris groups (iris, pupil, lens flare)
+            irisGroups.forEach(iris => {
+                iris.style.transform = `translate(${randomX}px, ${randomY}px)`;
+            });
+
+            // Schedule next movement randomly between 1-5 seconds
+            const nextMoveDelay = Math.random() * 5000 + 1000; // 1000ms to 5000ms
+            setTimeout(randomEyeMovement, nextMoveDelay);
+        }
+
+        // Start both animations when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial blink after 2 seconds
+            setTimeout(randomBlink, 2000);
+            // Initial eye movement after 1 second
+            setTimeout(randomEyeMovement, 1000);
+        });
+    </script>
+</body>
+</html>
