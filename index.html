@@ -23,6 +23,14 @@
             align-items: center;
             transform: scale(1) translate(0, 0);
             transition: transform 0.3s ease-out, gap 0.3s ease-out;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-origin: center center;
+        }
+
+        .eyes-container.hidden {
+            display: none;
         }
 
         .eye {
@@ -103,31 +111,40 @@
     </style>
 </head>
 <body>
-    <div class="eyes-container">
+    <div id="eyes-stage"></div>
+
+    <script>
+        // Create eye pair HTML dynamically
+        function createEyePair(setId) {
+            const container = document.createElement('div');
+            container.className = 'eyes-container';
+            container.setAttribute('data-set-id', setId);
+
+            container.innerHTML = `
         <!-- Left Eye -->
         <svg class="eye" viewBox="0 0 200 120">
             <!-- Gradients and filters for realistic iris -->
             <defs>
-                <radialGradient id="irisGradient1" cx="0.3" cy="0.3" r="0.7">
+                <radialGradient id="irisGradient1-${setId}" cx="0.3" cy="0.3" r="0.7">
                     <stop class="iris-gradient-stop-1" offset="0%" stop-color="#4CAF50" stop-opacity="0.8"/>
                     <stop class="iris-gradient-stop-2" offset="30%" stop-color="#388E3C" stop-opacity="0.6"/>
                     <stop class="iris-gradient-stop-3" offset="70%" stop-color="#2E7D32" stop-opacity="0.4"/>
                     <stop class="iris-gradient-stop-4" offset="100%" stop-color="#1B5E20" stop-opacity="0.8"/>
                 </radialGradient>
-                <radialGradient id="irisGradient2" cx="0.7" cy="0.4" r="0.6">
+                <radialGradient id="irisGradient2-${setId}" cx="0.7" cy="0.4" r="0.6">
                     <stop class="iris-gradient-stop-1" offset="0%" stop-color="#66BB6A" stop-opacity="0.6"/>
                     <stop class="iris-gradient-stop-2" offset="50%" stop-color="#43A047" stop-opacity="0.4"/>
                     <stop class="iris-gradient-stop-4" offset="100%" stop-color="#2E7D32" stop-opacity="0.7"/>
                 </radialGradient>
-                <radialGradient id="irisGradient3" cx="0.5" cy="0.7" r="0.5">
+                <radialGradient id="irisGradient3-${setId}" cx="0.5" cy="0.7" r="0.5">
                     <stop class="iris-gradient-stop-1" offset="0%" stop-color="#81C784" stop-opacity="0.5"/>
                     <stop class="iris-gradient-stop-2" offset="60%" stop-color="#4CAF50" stop-opacity="0.3"/>
                     <stop class="iris-gradient-stop-3" offset="100%" stop-color="#388E3C" stop-opacity="0.6"/>
                 </radialGradient>
-                <filter id="irisBlur" x="-50%" y="-50%" width="200%" height="200%">
+                <filter id="irisBlur-${setId}" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
                 </filter>
-                <filter id="irisBlur2" x="-50%" y="-50%" width="200%" height="200%">
+                <filter id="irisBlur2-${setId}" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="2"/>
                 </filter>
             </defs>
@@ -139,12 +156,12 @@
                 <!-- Base iris with color-changing gradient -->
                 <ellipse class="iris-main" cx="100" cy="60" rx="35" ry="35" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
                 <!-- Overlapping gradient clouds for texture -->
-                <ellipse cx="95" cy="55" rx="28" ry="28" fill="url(#irisGradient1)" filter="url(#irisBlur)"/>
-                <ellipse cx="105" cy="58" rx="25" ry="25" fill="url(#irisGradient2)" filter="url(#irisBlur)"/>
-                <ellipse cx="100" cy="65" rx="22" ry="22" fill="url(#irisGradient3)" filter="url(#irisBlur2)"/>
+                <ellipse cx="95" cy="55" rx="28" ry="28" fill="url(#irisGradient1-${setId})" filter="url(#irisBlur-${setId})"/>
+                <ellipse cx="105" cy="58" rx="25" ry="25" fill="url(#irisGradient2-${setId})" filter="url(#irisBlur-${setId})"/>
+                <ellipse cx="100" cy="65" rx="22" ry="22" fill="url(#irisGradient3-${setId})" filter="url(#irisBlur2-${setId})"/>
                 <!-- Additional texture layers -->
-                <ellipse cx="92" cy="62" rx="15" ry="15" fill="url(#irisGradient1)" filter="url(#irisBlur2)" opacity="0.4"/>
-                <ellipse cx="108" cy="55" rx="18" ry="18" fill="url(#irisGradient2)" filter="url(#irisBlur)" opacity="0.5"/>
+                <ellipse cx="92" cy="62" rx="15" ry="15" fill="url(#irisGradient1-${setId})" filter="url(#irisBlur2-${setId})" opacity="0.4"/>
+                <ellipse cx="108" cy="55" rx="18" ry="18" fill="url(#irisGradient2-${setId})" filter="url(#irisBlur-${setId})" opacity="0.5"/>
             </g>
 
             <!-- Black pupil -->
@@ -160,26 +177,26 @@
         <svg class="eye" viewBox="0 0 200 120">
             <!-- Gradients and filters for realistic iris -->
             <defs>
-                <radialGradient id="irisGradient1Right" cx="0.3" cy="0.3" r="0.7">
+                <radialGradient id="irisGradient1Right-${setId}" cx="0.3" cy="0.3" r="0.7">
                     <stop class="iris-gradient-stop-1" offset="0%" stop-color="#4CAF50" stop-opacity="0.8"/>
                     <stop class="iris-gradient-stop-2" offset="30%" stop-color="#388E3C" stop-opacity="0.6"/>
                     <stop class="iris-gradient-stop-3" offset="70%" stop-color="#2E7D32" stop-opacity="0.4"/>
                     <stop class="iris-gradient-stop-4" offset="100%" stop-color="#1B5E20" stop-opacity="0.8"/>
                 </radialGradient>
-                <radialGradient id="irisGradient2Right" cx="0.7" cy="0.4" r="0.6">
+                <radialGradient id="irisGradient2Right-${setId}" cx="0.7" cy="0.4" r="0.6">
                     <stop class="iris-gradient-stop-1" offset="0%" stop-color="#66BB6A" stop-opacity="0.6"/>
                     <stop class="iris-gradient-stop-2" offset="50%" stop-color="#43A047" stop-opacity="0.4"/>
                     <stop class="iris-gradient-stop-4" offset="100%" stop-color="#2E7D32" stop-opacity="0.7"/>
                 </radialGradient>
-                <radialGradient id="irisGradient3Right" cx="0.5" cy="0.7" r="0.5">
+                <radialGradient id="irisGradient3Right-${setId}" cx="0.5" cy="0.7" r="0.5">
                     <stop class="iris-gradient-stop-1" offset="0%" stop-color="#81C784" stop-opacity="0.5"/>
                     <stop class="iris-gradient-stop-2" offset="60%" stop-color="#4CAF50" stop-opacity="0.3"/>
                     <stop class="iris-gradient-stop-3" offset="100%" stop-color="#388E3C" stop-opacity="0.6"/>
                 </radialGradient>
-                <filter id="irisBlurRight" x="-50%" y="-50%" width="200%" height="200%">
+                <filter id="irisBlurRight-${setId}" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
                 </filter>
-                <filter id="irisBlur2Right" x="-50%" y="-50%" width="200%" height="200%">
+                <filter id="irisBlur2Right-${setId}" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="2"/>
                 </filter>
             </defs>
@@ -191,12 +208,12 @@
                 <!-- Base iris with color-changing gradient -->
                 <ellipse class="iris-main" cx="100" cy="60" rx="35" ry="35" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
                 <!-- Overlapping gradient clouds for texture -->
-                <ellipse cx="95" cy="55" rx="28" ry="28" fill="url(#irisGradient1Right)" filter="url(#irisBlurRight)"/>
-                <ellipse cx="105" cy="58" rx="25" ry="25" fill="url(#irisGradient2Right)" filter="url(#irisBlurRight)"/>
-                <ellipse cx="100" cy="65" rx="22" ry="22" fill="url(#irisGradient3Right)" filter="url(#irisBlur2Right)"/>
+                <ellipse cx="95" cy="55" rx="28" ry="28" fill="url(#irisGradient1Right-${setId})" filter="url(#irisBlurRight-${setId})"/>
+                <ellipse cx="105" cy="58" rx="25" ry="25" fill="url(#irisGradient2Right-${setId})" filter="url(#irisBlurRight-${setId})"/>
+                <ellipse cx="100" cy="65" rx="22" ry="22" fill="url(#irisGradient3Right-${setId})" filter="url(#irisBlur2Right-${setId})"/>
                 <!-- Additional texture layers -->
-                <ellipse cx="92" cy="62" rx="15" ry="15" fill="url(#irisGradient1Right)" filter="url(#irisBlur2Right)" opacity="0.4"/>
-                <ellipse cx="108" cy="55" rx="18" ry="18" fill="url(#irisGradient2Right)" filter="url(#irisBlurRight)" opacity="0.5"/>
+                <ellipse cx="92" cy="62" rx="15" ry="15" fill="url(#irisGradient1Right-${setId})" filter="url(#irisBlur2Right-${setId})" opacity="0.4"/>
+                <ellipse cx="108" cy="55" rx="18" ry="18" fill="url(#irisGradient2Right-${setId})" filter="url(#irisBlurRight-${setId})" opacity="0.5"/>
             </g>
 
             <!-- Black pupil -->
@@ -207,18 +224,42 @@
                 <ellipse cx="92" cy="52" rx="1.5" ry="1.5" fill="rgba(255,255,255,0.7)"/>
             </g>
         </svg>
-    </div>
+`;
+            return container;
+        }
 
-    <script>
+        // Eye sets state management
+        const eyeSets = [];
+        let activeSetIndex = -1;
+        const maxSets = 10;
+
+        // Default values for new eye sets
+        const defaultState = {
+            scale: 1,
+            gap: 20,
+            posX: 0,
+            posY: 0
+        };
+
+        // Constants
+        const minScale = 0.05;
+        const maxScale = 10;
+        const scaleStep = 0.05;
+        const minGap = -50;
+        const maxGap = 200;
+        const gapStep = 5;
+        const posStep = 40;
+
         function randomBlink() {
-            const eyes = document.querySelectorAll('.eye');
+            // Only blink visible eyes
+            const visibleEyes = document.querySelectorAll('.eyes-container:not(.hidden) .eye');
 
             // Add blink class
-            eyes.forEach(eye => eye.classList.add('blinking'));
+            visibleEyes.forEach(eye => eye.classList.add('blinking'));
 
             // Remove blink class after 100ms (blink duration)
             setTimeout(() => {
-                eyes.forEach(eye => eye.classList.remove('blinking'));
+                visibleEyes.forEach(eye => eye.classList.remove('blinking'));
             }, 100);
 
             // Schedule next blink randomly between 4-20 seconds
@@ -227,7 +268,8 @@
         }
 
         function randomEyeMovement() {
-            const irisGroups = document.querySelectorAll('.iris');
+            // Only move irises in visible eyes
+            const visibleIrises = document.querySelectorAll('.eyes-container:not(.hidden) .iris');
 
             // Generate random position within eye bounds
             const maxX = 50; // Maximum horizontal movement
@@ -236,7 +278,7 @@
             const randomY = (Math.random() - 0.5) * 2 * maxY; // -10 to 10
 
             // Apply movement to all iris groups (iris, pupil, lens flare)
-            irisGroups.forEach(iris => {
+            visibleIrises.forEach(iris => {
                 iris.style.transform = `translate(${randomX}px, ${randomY}px)`;
             });
 
@@ -245,72 +287,122 @@
             setTimeout(randomEyeMovement, nextMoveDelay);
         }
 
-        // Control variables
-        let currentScale = 1;
-        const minScale = 0.05;
-        const maxScale = 10;
-        const scaleStep = 0.05;
+        // Create or get an eye set
+        function getOrCreateEyeSet(setIndex) {
+            if (eyeSets[setIndex]) {
+                return eyeSets[setIndex];
+            }
 
-        let currentGap = 20; // Starting gap in vw units
-        const minGap = -50;
-        const maxGap = 200;
-        const gapStep = 5;
+            // Create new eye set
+            const container = createEyePair(setIndex);
+            const state = { ...defaultState };
 
-        let posX = 0; // Position in pixels
-        let posY = 0;
-        const posStep = 20;
+            eyeSets[setIndex] = {
+                element: container,
+                ...state,
+                visible: false
+            };
 
-        function updateTransform() {
-            const eyesContainer = document.querySelector('.eyes-container');
-            eyesContainer.style.transform = `scale(${currentScale}) translate(${posX}px, ${posY}px)`;
+            document.getElementById('eyes-stage').appendChild(container);
+            return eyeSets[setIndex];
+        }
+
+        // Update eye set transform
+        function updateEyeSetTransform(setIndex) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { scale, posX, posY, gap } = eyeSet;
+            eyeSet.element.style.transform = `scale(${scale}) translate(${posX}px, ${posY}px)`;
+            eyeSet.element.style.gap = `${gap}vw`;
         }
 
         document.addEventListener('keydown', (event) => {
-            const eyesContainer = document.querySelector('.eyes-container');
             const key = event.key.toLowerCase();
+
+            // Number keys 1-0 for eye set toggle (maps to sets 0-9)
+            if (key >= '1' && key <= '9') {
+                event.preventDefault();
+                const setIndex = parseInt(key) - 1;
+                toggleEyeSet(setIndex);
+                return;
+            } else if (key === '0') {
+                event.preventDefault();
+                toggleEyeSet(9); // 0 key maps to set 9
+                return;
+            }
+
+            // Control keys only work if there's an active set
+            if (activeSetIndex === -1) return;
+            const eyeSet = eyeSets[activeSetIndex];
 
             // Q/W for scale (up/down)
             if (key === 'q') {
                 event.preventDefault();
-                currentScale = Math.min(currentScale + scaleStep, maxScale);
-                updateTransform();
+                eyeSet.scale = Math.min(eyeSet.scale + scaleStep, maxScale);
+                updateEyeSetTransform(activeSetIndex);
             } else if (key === 'w') {
                 event.preventDefault();
-                currentScale = Math.max(currentScale - scaleStep, minScale);
-                updateTransform();
+                eyeSet.scale = Math.max(eyeSet.scale - scaleStep, minScale);
+                updateEyeSetTransform(activeSetIndex);
             }
             // E/R for gap (wider/closer)
             else if (key === 'e') {
                 event.preventDefault();
-                currentGap = Math.min(currentGap + gapStep, maxGap);
-                eyesContainer.style.gap = `${currentGap}vw`;
+                eyeSet.gap = Math.min(eyeSet.gap + gapStep, maxGap);
+                updateEyeSetTransform(activeSetIndex);
             } else if (key === 'r') {
                 event.preventDefault();
-                currentGap = Math.max(currentGap - gapStep, minGap);
-                eyesContainer.style.gap = `${currentGap}vw`;
+                eyeSet.gap = Math.max(eyeSet.gap - gapStep, minGap);
+                updateEyeSetTransform(activeSetIndex);
             }
             // Arrow keys for position
             else if (event.key === 'ArrowUp') {
                 event.preventDefault();
-                posY -= posStep;
-                updateTransform();
+                eyeSet.posY -= posStep;
+                updateEyeSetTransform(activeSetIndex);
             } else if (event.key === 'ArrowDown') {
                 event.preventDefault();
-                posY += posStep;
-                updateTransform();
+                eyeSet.posY += posStep;
+                updateEyeSetTransform(activeSetIndex);
             } else if (event.key === 'ArrowLeft') {
                 event.preventDefault();
-                posX -= posStep;
-                updateTransform();
+                eyeSet.posX -= posStep;
+                updateEyeSetTransform(activeSetIndex);
             } else if (event.key === 'ArrowRight') {
                 event.preventDefault();
-                posX += posStep;
-                updateTransform();
+                eyeSet.posX += posStep;
+                updateEyeSetTransform(activeSetIndex);
             }
         });
 
+        // Toggle eye set visibility and active state
+        function toggleEyeSet(setIndex) {
+            if (setIndex < 0 || setIndex >= maxSets) return;
+
+            const eyeSet = getOrCreateEyeSet(setIndex);
+
+            // If this set is active and visible, hide it
+            if (activeSetIndex === setIndex && eyeSet.visible) {
+                eyeSet.visible = false;
+                eyeSet.element.classList.add('hidden');
+                return;
+            }
+
+            // If this set exists but is not active, make it active
+            if (!eyeSet.visible) {
+                eyeSet.visible = true;
+                eyeSet.element.classList.remove('hidden');
+            }
+
+            activeSetIndex = setIndex;
+        }
+
         // Start both animations when page loads
         document.addEventListener('DOMContentLoaded', () => {
+            // Create and show the first eye set (set 0, accessed by key '1')
+            toggleEyeSet(0);
+
             // Initial blink after 2 seconds
             setTimeout(randomBlink, 2000);
             // Initial eye movement after 1 second
