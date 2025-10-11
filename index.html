@@ -21,7 +21,7 @@
             display: flex;
             gap: 20vw;
             align-items: center;
-            transform: scale(1);
+            transform: scale(1) translate(0, 0);
             transition: transform 0.3s ease-out, gap 0.3s ease-out;
         }
 
@@ -245,36 +245,67 @@
             setTimeout(randomEyeMovement, nextMoveDelay);
         }
 
-        // Scale and gap control with arrow keys
+        // Control variables
         let currentScale = 1;
-        const minScale = 0.2;
-        const maxScale = 3;
-        const scaleStep = 0.1;
+        const minScale = 0.05;
+        const maxScale = 10;
+        const scaleStep = 0.05;
 
         let currentGap = 20; // Starting gap in vw units
-        const minGap = 0;
-        const maxGap = 40;
-        const gapStep = 2;
+        const minGap = -50;
+        const maxGap = 200;
+        const gapStep = 5;
+
+        let posX = 0; // Position in pixels
+        let posY = 0;
+        const posStep = 20;
+
+        function updateTransform() {
+            const eyesContainer = document.querySelector('.eyes-container');
+            eyesContainer.style.transform = `scale(${currentScale}) translate(${posX}px, ${posY}px)`;
+        }
 
         document.addEventListener('keydown', (event) => {
             const eyesContainer = document.querySelector('.eyes-container');
+            const key = event.key.toLowerCase();
 
-            if (event.key === 'ArrowUp') {
+            // Q/W for scale (up/down)
+            if (key === 'q') {
                 event.preventDefault();
                 currentScale = Math.min(currentScale + scaleStep, maxScale);
-                eyesContainer.style.transform = `scale(${currentScale})`;
-            } else if (event.key === 'ArrowDown') {
+                updateTransform();
+            } else if (key === 'w') {
                 event.preventDefault();
                 currentScale = Math.max(currentScale - scaleStep, minScale);
-                eyesContainer.style.transform = `scale(${currentScale})`;
-            } else if (event.key === 'ArrowRight') {
+                updateTransform();
+            }
+            // E/R for gap (wider/closer)
+            else if (key === 'e') {
                 event.preventDefault();
                 currentGap = Math.min(currentGap + gapStep, maxGap);
                 eyesContainer.style.gap = `${currentGap}vw`;
-            } else if (event.key === 'ArrowLeft') {
+            } else if (key === 'r') {
                 event.preventDefault();
                 currentGap = Math.max(currentGap - gapStep, minGap);
                 eyesContainer.style.gap = `${currentGap}vw`;
+            }
+            // Arrow keys for position
+            else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                posY -= posStep;
+                updateTransform();
+            } else if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                posY += posStep;
+                updateTransform();
+            } else if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                posX -= posStep;
+                updateTransform();
+            } else if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                posX += posStep;
+                updateTransform();
             }
         });
 

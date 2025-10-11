@@ -25,3 +25,8 @@ Code architecture
 - Color animations cycle through 6 keyframe stops at 16.67% intervals (60s / 6 colors).
 - Movement constraints: horizontal ±50px, vertical ±10px to keep iris within eye bounds.
 - Smooth scale animation.
+
+User controls
+- Q/W: Scale up/down
+- E/R: Gap wider/closer
+- Arrow keys: Move position (up/down/left/right)
