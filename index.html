@@ -21,6 +21,8 @@
             display: flex;
             gap: 20vw;
             align-items: center;
+            transform: scale(1);
+            transition: transform 0.3s ease-out, gap 0.3s ease-out;
         }
 
         .eye {
@@ -242,6 +244,39 @@
             const nextMoveDelay = Math.random() * 5000 + 1000; // 1000ms to 5000ms
             setTimeout(randomEyeMovement, nextMoveDelay);
         }
+
+        // Scale and gap control with arrow keys
+        let currentScale = 1;
+        const minScale = 0.2;
+        const maxScale = 3;
+        const scaleStep = 0.1;
+
+        let currentGap = 20; // Starting gap in vw units
+        const minGap = 0;
+        const maxGap = 40;
+        const gapStep = 2;
+
+        document.addEventListener('keydown', (event) => {
+            const eyesContainer = document.querySelector('.eyes-container');
+
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                currentScale = Math.min(currentScale + scaleStep, maxScale);
+                eyesContainer.style.transform = `scale(${currentScale})`;
+            } else if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                currentScale = Math.max(currentScale - scaleStep, minScale);
+                eyesContainer.style.transform = `scale(${currentScale})`;
+            } else if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                currentGap = Math.min(currentGap + gapStep, maxGap);
+                eyesContainer.style.gap = `${currentGap}vw`;
+            } else if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                currentGap = Math.max(currentGap - gapStep, minGap);
+                eyesContainer.style.gap = `${currentGap}vw`;
+            }
+        });
 
         // Start both animations when page loads
         document.addEventListener('DOMContentLoaded', () => {
