@@ -382,7 +382,7 @@
             if (!eyeSet) return;
 
             const { scale, posX, posY, gap } = eyeSet;
-            eyeSet.element.style.transform = `scale(${scale}) translate(${posX}px, ${posY}px)`;
+            eyeSet.element.style.transform = `translate(calc(-50% + ${posX}px), calc(-50% + ${posY}px)) scale(${scale})`;
             eyeSet.element.style.gap = `${gap}vw`;
         }
 
@@ -463,6 +463,8 @@
             if (!eyeSet.visible) {
                 eyeSet.visible = true;
                 eyeSet.element.classList.remove('hidden');
+                // Apply initial transform to center the eyes
+                updateEyeSetTransform(setIndex);
                 // Stop existing animations and restart with fresh timing
                 stopEyeSetAnimations(setIndex);
                 startEyeSetAnimations(setIndex);
