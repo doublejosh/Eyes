@@ -48,6 +48,41 @@
             transition: transform 1.5s ease-out;
         }
 
+        .instructions {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 20, 20, 0.9);
+            color: #ccc;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 300px;
+            display: none;
+        }
+
+        .instructions.visible {
+            display: block;
+        }
+
+        .instructions h3 {
+            margin: 0 0 10px 0;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .instructions p {
+            margin: 8px 0;
+        }
+
+        .instructions kbd {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
         @keyframes colorShift1 {
             0% { stop-color: #4CAF50; }      /* Light Green */
             16.67% { stop-color: #D2691E; }  /* Saddle Brown */
@@ -102,6 +137,15 @@
 </head>
 <body>
     <div id="eyes-stage"></div>
+
+    <div class="instructions" id="instructions">
+        <h3>Controls</h3>
+        <p><kbd>1-0</kbd> Toggle eye sets (up to 10)</p>
+        <p><kbd>Q/W</kbd> Scale up/down</p>
+        <p><kbd>E/R</kbd> Gap wider/closer</p>
+        <p><kbd>↑↓←→</kbd> Move position</p>
+        <p><kbd>Space</kbd> Toggle help</p>
+    </div>
 
     <script>
         // Create eye pair HTML dynamically
@@ -396,6 +440,14 @@
 
         document.addEventListener('keydown', (event) => {
             const key = event.key.toLowerCase();
+
+            // Spacebar to toggle instructions
+            if (key === ' ') {
+                event.preventDefault();
+                const instructions = document.getElementById('instructions');
+                instructions.classList.toggle('visible');
+                return;
+            }
 
             // Number keys 1-0 for eye set toggle (maps to sets 0-9)
             if (key >= '1' && key <= '9') {
