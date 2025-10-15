@@ -230,7 +230,8 @@
             posX: 0,
             posY: 0,
             blinkTimeoutId: null,
-            moveTimeoutId: null
+            moveTimeoutId: null,
+            everShown: false
         };
 
         // Constants
@@ -241,6 +242,13 @@
         const maxGap = 200;
         const gapStep = 3;
         const posStep = 40;
+
+        // Generate random spawn position
+        function getRandomSpawnPosition() {
+            const randomX = (Math.random() - 0.5) * 800; // -400 to 400
+            const randomY = (Math.random() - 0.5) * 400; // -200 to 200
+            return { posX: randomX, posY: randomY };
+        }
 
         // Per-set blinking function
         function blinkEyeSet(setIndex) {
@@ -461,6 +469,14 @@
 
             // If this set exists but is not active, make it active
             if (!eyeSet.visible) {
+                // First time showing this eye set - spawn at random location
+                if (!eyeSet.everShown) {
+                    const randomPos = getRandomSpawnPosition();
+                    eyeSet.posX = randomPos.posX;
+                    eyeSet.posY = randomPos.posY;
+                    eyeSet.everShown = true;
+                }
+
                 eyeSet.visible = true;
                 eyeSet.element.classList.remove('hidden');
                 // Apply initial transform to center the eyes
