@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- GitHub: https://github.com/doublejosh/Eyes -->
+<!-- Press Space bar for help -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -83,6 +85,24 @@
             font-family: monospace;
         }
 
+        .help-message {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 18px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .help-message.visible {
+            opacity: 1;
+        }
+
         @keyframes colorShift1 {
             0% { stop-color: #4CAF50; }      /* Light Green */
             16.67% { stop-color: #D2691E; }  /* Saddle Brown */
@@ -137,6 +157,8 @@
 </head>
 <body>
     <div id="eyes-stage"></div>
+
+    <div class="help-message" id="help-message">Space bar for help</div>
 
     <div class="instructions" id="instructions">
         <h3>Controls</h3>
@@ -546,6 +568,20 @@
             // Create and show the first eye set (set 0, accessed by key '1')
             // toggleEyeSet will automatically start its animations
             toggleEyeSet(0);
+
+            // Console message
+            console.log('Press Space bar for help');
+
+            // Show help message on page load
+            const helpMessage = document.getElementById('help-message');
+            setTimeout(() => {
+                helpMessage.classList.add('visible');
+            }, 100); // Small delay to ensure transition works
+
+            // Fade out after 5 seconds
+            setTimeout(() => {
+                helpMessage.classList.remove('visible');
+            }, 5100);
         });
     </script>
 </body>
