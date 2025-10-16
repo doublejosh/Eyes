@@ -103,6 +103,36 @@
             opacity: 1;
         }
 
+        .spider-grid {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .spider-grid.active {
+            display: grid;
+        }
+
+        .spider-eye {
+            width: 80px;
+            height: 80px;
+            cursor: pointer;
+            transition: transform 0.1s ease-out;
+        }
+
+        .spider-eye.blinking {
+            transform: scaleY(0.1);
+        }
+
+        #eyes-stage.spider-mode-active {
+            display: none;
+        }
+
         @keyframes colorShift1 {
             0% { stop-color: #4CAF50; }      /* Light Green */
             16.67% { stop-color: #D2691E; }  /* Saddle Brown */
@@ -158,6 +188,8 @@
 <body>
     <div id="eyes-stage"></div>
 
+    <div id="spider-stage" class="spider-grid"></div>
+
     <div class="help-message" id="help-message">Space bar for help</div>
 
     <div class="instructions" id="instructions">
@@ -166,10 +198,72 @@
         <p><kbd>Q/W</kbd> Scale up/down</p>
         <p><kbd>E/R</kbd> Gap wider/closer</p>
         <p><kbd>↑↓←→</kbd> Move position</p>
+        <p><kbd>Z</kbd> Toggle Spider Mode</p>
         <p><kbd>Space</kbd> Toggle help</p>
     </div>
 
     <script>
+        // Create single spider eye HTML dynamically
+        function createSpiderEye(eyeId) {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'spider-eye');
+            svg.setAttribute('viewBox', '0 0 100 100');
+            svg.setAttribute('data-eye-id', eyeId);
+
+            svg.innerHTML = `
+                <!-- Gradients and filters for realistic iris -->
+                <defs>
+                    <radialGradient id="spiderIrisGradient1-${eyeId}" cx="0.3" cy="0.3" r="0.7">
+                        <stop class="iris-gradient-stop-1" offset="0%" stop-color="#4CAF50" stop-opacity="0.8"/>
+                        <stop class="iris-gradient-stop-2" offset="30%" stop-color="#388E3C" stop-opacity="0.6"/>
+                        <stop class="iris-gradient-stop-3" offset="70%" stop-color="#2E7D32" stop-opacity="0.4"/>
+                        <stop class="iris-gradient-stop-4" offset="100%" stop-color="#1B5E20" stop-opacity="0.8"/>
+                    </radialGradient>
+                    <radialGradient id="spiderIrisGradient2-${eyeId}" cx="0.7" cy="0.4" r="0.6">
+                        <stop class="iris-gradient-stop-1" offset="0%" stop-color="#66BB6A" stop-opacity="0.6"/>
+                        <stop class="iris-gradient-stop-2" offset="50%" stop-color="#43A047" stop-opacity="0.4"/>
+                        <stop class="iris-gradient-stop-4" offset="100%" stop-color="#2E7D32" stop-opacity="0.7"/>
+                    </radialGradient>
+                    <radialGradient id="spiderIrisGradient3-${eyeId}" cx="0.5" cy="0.7" r="0.5">
+                        <stop class="iris-gradient-stop-1" offset="0%" stop-color="#81C784" stop-opacity="0.5"/>
+                        <stop class="iris-gradient-stop-2" offset="60%" stop-color="#4CAF50" stop-opacity="0.3"/>
+                        <stop class="iris-gradient-stop-3" offset="100%" stop-color="#388E3C" stop-opacity="0.6"/>
+                    </radialGradient>
+                    <filter id="spiderIrisBlur-${eyeId}" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
+                    </filter>
+                    <filter id="spiderIrisBlur2-${eyeId}" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="2"/>
+                    </filter>
+                </defs>
+                <!-- Eye white (circular) -->
+                <circle cx="50" cy="50" r="48" fill="white" stroke="#ddd" stroke-width="2"/>
+
+                <!-- Iris group -->
+                <g class="iris">
+                    <!-- Base iris with color-changing gradient -->
+                    <circle class="iris-main" cx="50" cy="50" r="20" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
+                    <!-- Overlapping gradient clouds for texture -->
+                    <circle cx="47" cy="47" r="16" fill="url(#spiderIrisGradient1-${eyeId})" filter="url(#spiderIrisBlur-${eyeId})"/>
+                    <circle cx="53" cy="49" r="14" fill="url(#spiderIrisGradient2-${eyeId})" filter="url(#spiderIrisBlur-${eyeId})"/>
+                    <circle cx="50" cy="53" r="12" fill="url(#spiderIrisGradient3-${eyeId})" filter="url(#spiderIrisBlur2-${eyeId})"/>
+                    <!-- Additional texture layers -->
+                    <circle cx="46" cy="51" r="8" fill="url(#spiderIrisGradient1-${eyeId})" filter="url(#spiderIrisBlur2-${eyeId})" opacity="0.4"/>
+                    <circle cx="54" cy="47" r="10" fill="url(#spiderIrisGradient2-${eyeId})" filter="url(#spiderIrisBlur-${eyeId})" opacity="0.5"/>
+                </g>
+
+                <!-- Black pupil -->
+                <g class="iris">
+                    <circle cx="50" cy="50" r="8" fill="#000"/>
+                    <!-- Lens flare inside pupil -->
+                    <circle cx="47" cy="47" r="2" fill="rgba(255,255,255,0.9)"/>
+                    <circle cx="45" cy="45" r="1" fill="rgba(255,255,255,0.7)"/>
+                </g>
+            `;
+
+            return svg;
+        }
+
         // Create eye pair HTML dynamically
         function createEyePair(setId) {
             const container = document.createElement('div');
@@ -289,6 +383,11 @@
         let activeSetIndex = -1;
         const maxSets = 10;
 
+        // Spider mode state management
+        let isSpiderModeActive = false;
+        const spiderEyes = [];
+        const spiderEyeCount = 25;
+
         // Default values for new eye sets
         const defaultState = {
             scale: 1,
@@ -314,6 +413,188 @@
             const randomX = (Math.random() - 0.5) * 800; // -400 to 400
             const randomY = (Math.random() - 0.5) * 400; // -200 to 200
             return { posX: randomX, posY: randomY };
+        }
+
+        // Spider mode functions
+        function blinkSpiderEye(eyeId) {
+            if (!isSpiderModeActive) return;
+
+            const eyeData = spiderEyes[eyeId];
+            if (!eyeData) return;
+
+            // Add blink class
+            eyeData.element.classList.add('blinking');
+
+            // Remove blink class after 100ms
+            setTimeout(() => {
+                eyeData.element.classList.remove('blinking');
+            }, 100);
+
+            // Schedule next blink randomly between 4-20 seconds
+            const nextBlinkDelay = Math.random() * 16000 + 4000;
+            eyeData.blinkTimeoutId = setTimeout(() => blinkSpiderEye(eyeId), nextBlinkDelay);
+        }
+
+        function moveSpiderEyeIris(eyeId) {
+            if (!isSpiderModeActive) return;
+
+            const eyeData = spiderEyes[eyeId];
+            if (!eyeData) return;
+
+            const irises = eyeData.element.querySelectorAll('.iris');
+
+            // Generate random position within eye bounds (smaller range for smaller eyes)
+            const maxX = 15; // Maximum horizontal movement
+            const maxY = 15; // Maximum vertical movement
+            const randomX = (Math.random() - 0.5) * 2 * maxX;
+            const randomY = (Math.random() - 0.5) * 2 * maxY;
+
+            // Apply movement to all iris groups
+            irises.forEach(iris => {
+                iris.style.transform = `translate(${randomX}px, ${randomY}px)`;
+            });
+
+            // Schedule next movement randomly between 1-5 seconds
+            const nextMoveDelay = Math.random() * 4000 + 1000;
+            eyeData.moveTimeoutId = setTimeout(() => moveSpiderEyeIris(eyeId), nextMoveDelay);
+        }
+
+        function startSpiderEyeAnimations(eyeId) {
+            const eyeData = spiderEyes[eyeId];
+            if (!eyeData) return;
+
+            // Apply color animations with random delay
+            const randomDelay = Math.random() * 60;
+            const animationStyle = `colorShift 60s infinite linear ${randomDelay}s`;
+            const gradientAnimations = [
+                `colorShift1 60s infinite linear ${randomDelay}s`,
+                `colorShift2 60s infinite linear ${randomDelay}s`,
+                `colorShift3 60s infinite linear ${randomDelay}s`,
+                `colorShift4 60s infinite linear ${randomDelay}s`
+            ];
+
+            // Apply animations to iris-main elements
+            const irisMainElements = eyeData.element.querySelectorAll('.iris-main');
+            irisMainElements.forEach(elem => {
+                elem.style.animation = animationStyle;
+            });
+
+            // Apply animations to gradient stops
+            const gradientStops = eyeData.element.querySelectorAll('.iris-gradient-stop-1, .iris-gradient-stop-2, .iris-gradient-stop-3, .iris-gradient-stop-4');
+            gradientStops.forEach(stop => {
+                if (stop.classList.contains('iris-gradient-stop-1')) {
+                    stop.style.animation = gradientAnimations[0];
+                } else if (stop.classList.contains('iris-gradient-stop-2')) {
+                    stop.style.animation = gradientAnimations[1];
+                } else if (stop.classList.contains('iris-gradient-stop-3')) {
+                    stop.style.animation = gradientAnimations[2];
+                } else if (stop.classList.contains('iris-gradient-stop-4')) {
+                    stop.style.animation = gradientAnimations[3];
+                }
+            });
+
+            // Start blinking with initial random delay (1-3 seconds)
+            const initialBlinkDelay = Math.random() * 2000 + 1000;
+            eyeData.blinkTimeoutId = setTimeout(() => blinkSpiderEye(eyeId), initialBlinkDelay);
+
+            // Start iris movement with initial random delay (0.5-2 seconds)
+            const initialMoveDelay = Math.random() * 1500 + 500;
+            eyeData.moveTimeoutId = setTimeout(() => moveSpiderEyeIris(eyeId), initialMoveDelay);
+        }
+
+        function stopSpiderEyeAnimations(eyeId) {
+            const eyeData = spiderEyes[eyeId];
+            if (!eyeData) return;
+
+            // Clear timeout timers
+            if (eyeData.blinkTimeoutId) {
+                clearTimeout(eyeData.blinkTimeoutId);
+                eyeData.blinkTimeoutId = null;
+            }
+            if (eyeData.moveTimeoutId) {
+                clearTimeout(eyeData.moveTimeoutId);
+                eyeData.moveTimeoutId = null;
+            }
+
+            // Remove color animations
+            const irisMainElements = eyeData.element.querySelectorAll('.iris-main');
+            irisMainElements.forEach(elem => {
+                elem.style.animation = '';
+            });
+
+            const gradientStops = eyeData.element.querySelectorAll('.iris-gradient-stop-1, .iris-gradient-stop-2, .iris-gradient-stop-3, .iris-gradient-stop-4');
+            gradientStops.forEach(stop => {
+                stop.style.animation = '';
+            });
+        }
+
+        function initializeSpiderMode() {
+            const spiderStage = document.getElementById('spider-stage');
+
+            // Create 25 spider eyes if not already created
+            if (spiderEyes.length === 0) {
+                for (let i = 0; i < spiderEyeCount; i++) {
+                    const eyeElement = createSpiderEye(i);
+                    spiderStage.appendChild(eyeElement);
+                    spiderEyes.push({
+                        element: eyeElement,
+                        blinkTimeoutId: null,
+                        moveTimeoutId: null
+                    });
+                }
+            }
+        }
+
+        function toggleSpiderMode() {
+            const eyesStage = document.getElementById('eyes-stage');
+            const spiderStage = document.getElementById('spider-stage');
+
+            if (!isSpiderModeActive) {
+                // Entering spider mode
+                isSpiderModeActive = true;
+
+                // Hide normal eyes
+                eyesStage.classList.add('spider-mode-active');
+
+                // Stop all normal eye animations
+                for (let i = 0; i < eyeSets.length; i++) {
+                    if (eyeSets[i] && eyeSets[i].visible) {
+                        stopEyeSetAnimations(i);
+                    }
+                }
+
+                // Initialize spider eyes if first time
+                initializeSpiderMode();
+
+                // Show spider grid
+                spiderStage.classList.add('active');
+
+                // Start all spider eye animations
+                for (let i = 0; i < spiderEyeCount; i++) {
+                    startSpiderEyeAnimations(i);
+                }
+            } else {
+                // Exiting spider mode
+                isSpiderModeActive = false;
+
+                // Stop all spider eye animations
+                for (let i = 0; i < spiderEyeCount; i++) {
+                    stopSpiderEyeAnimations(i);
+                }
+
+                // Hide spider grid
+                spiderStage.classList.remove('active');
+
+                // Show normal eyes
+                eyesStage.classList.remove('spider-mode-active');
+
+                // Restart animations for visible normal eye sets
+                for (let i = 0; i < eyeSets.length; i++) {
+                    if (eyeSets[i] && eyeSets[i].visible) {
+                        startEyeSetAnimations(i);
+                    }
+                }
+            }
         }
 
         // Per-set blinking function
@@ -468,6 +749,13 @@
                 event.preventDefault();
                 const instructions = document.getElementById('instructions');
                 instructions.classList.toggle('visible');
+                return;
+            }
+
+            // Z key to toggle Spider Mode
+            if (key === 'z') {
+                event.preventDefault();
+                toggleSpiderMode();
                 return;
             }
 
