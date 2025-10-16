@@ -123,7 +123,7 @@
             width: 60px;
             height: 60px;
             cursor: pointer;
-            transition: transform 0.1s ease-out;
+            transition: transform 0.2s ease-in-out;
         }
 
         .spider-eye.blinking {
@@ -246,7 +246,12 @@
 
         @keyframes eyePulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.12); }
+            50% { transform: scale(1.16); }
+        }
+
+        @keyframes eyeBlink {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.85); }
         }
 
     </style>
@@ -465,13 +470,16 @@
             const eyeData = spiderEyes[eyeId];
             if (!eyeData) return;
 
-            // Add blink class
-            eyeData.element.classList.add('blinking');
+            // Store the current pulse animation
+            const currentAnimation = eyeData.element.style.animation;
 
-            // Remove blink class after 100ms
+            // Apply blink animation (overrides pulse temporarily)
+            eyeData.element.style.animation = 'eyeBlink 0.4s ease-in-out';
+
+            // Restore pulse animation after blink completes
             setTimeout(() => {
-                eyeData.element.classList.remove('blinking');
-            }, 100);
+                eyeData.element.style.animation = currentAnimation;
+            }, 400);
 
             // Schedule next blink randomly between 4-20 seconds
             const nextBlinkDelay = Math.random() * 16000 + 4000;
