@@ -244,6 +244,11 @@
             100% { fill: #8b0000; }    /* Back to Dark Red */
         }
 
+        @keyframes eyePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+        }
+
     </style>
 </head>
 <body>
@@ -501,6 +506,10 @@
             const eyeData = spiderEyes[eyeId];
             if (!eyeData) return;
 
+            // Apply pulsing animation with random duration (3-8 seconds)
+            const pulseDuration = Math.random() * 5 + 3; // 3-8 seconds
+            eyeData.element.style.animation = `eyePulse ${pulseDuration}s infinite ease-in-out`;
+
             // Apply color animations with random delay
             const randomDelay = Math.random() * 60;
             const animationStyle = `colorShift 60s infinite linear ${randomDelay}s`;
@@ -533,6 +542,9 @@
                 clearTimeout(eyeData.moveTimeoutId);
                 eyeData.moveTimeoutId = null;
             }
+
+            // Remove pulse animation from eye element
+            eyeData.element.style.animation = '';
 
             // Remove color animations
             const irisMainElements = eyeData.element.querySelectorAll('.iris-main');
