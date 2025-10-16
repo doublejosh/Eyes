@@ -27,6 +27,18 @@ Code architecture
 - Smooth scale animation.
 
 User controls
+- 1-0: Toggle eye sets (up to 10)
 - Q/W: Scale up/down
 - E/R: Gap wider/closer
 - Arrow keys: Move position (up/down/left/right)
+- Z: Toggle Spider Mode
+- Space: Toggle help
+
+Spider Mode
+- Press Z to enter/exit Spider Mode - an alternate display mode featuring ~200 individual circular eyes
+- Eyes arranged in a ~14x14 grid with alternating row offsets creating a honeycomb pattern
+- Corner eyes hidden to create an overall circular cluster shape
+- Each eye has independent blinking (4-20s intervals) and iris movement (1-5s intervals)
+- Simplified rendering (no gradients or blur filters) for performance with high eye count
+- All eyes share synchronized color cycling animations
+- Spider mode hides normal eye pairs when active

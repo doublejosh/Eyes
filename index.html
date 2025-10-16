@@ -109,9 +109,9 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            grid-template-columns: repeat(10, 80px);
-            row-gap: -10px;
-            column-gap: 10px;
+            grid-template-columns: repeat(14, 60px);
+            row-gap: -8px;
+            column-gap: 8px;
             padding: 20px;
         }
 
@@ -120,8 +120,8 @@
         }
 
         .spider-eye {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             cursor: pointer;
             transition: transform 0.1s ease-out;
         }
@@ -130,34 +130,63 @@
             transform: scaleY(0.1);
         }
 
-        /* Offset every other row (rows 2, 4, 6, 8, 10) */
-        .spider-eye:nth-child(n+11):nth-child(-n+20),
-        .spider-eye:nth-child(n+31):nth-child(-n+40),
-        .spider-eye:nth-child(n+51):nth-child(-n+60),
-        .spider-eye:nth-child(n+71):nth-child(-n+80),
-        .spider-eye:nth-child(n+91):nth-child(-n+100) {
-            margin-left: 40px;
+        /* Offset every other row (rows 2, 4, 6, 8, 10, 12, 14) */
+        .spider-eye:nth-child(n+15):nth-child(-n+28),
+        .spider-eye:nth-child(n+43):nth-child(-n+56),
+        .spider-eye:nth-child(n+71):nth-child(-n+84),
+        .spider-eye:nth-child(n+99):nth-child(-n+112),
+        .spider-eye:nth-child(n+127):nth-child(-n+140),
+        .spider-eye:nth-child(n+155):nth-child(-n+168),
+        .spider-eye:nth-child(n+183):nth-child(-n+196) {
+            margin-left: 30px;
         }
 
-        /* Hide corner eyes to make circular shape */
-        /* Row 1: hide corners */
+        /* Hide corner eyes to make circular shape for 14x14 grid */
+        /* Row 1: hide outer corners */
         .spider-eye:nth-child(1),
         .spider-eye:nth-child(2),
-        .spider-eye:nth-child(10),
+        .spider-eye:nth-child(3),
+        .spider-eye:nth-child(12),
+        .spider-eye:nth-child(13),
+        .spider-eye:nth-child(14),
         /* Row 2: hide corners */
-        .spider-eye:nth-child(11),
-        .spider-eye:nth-child(20),
+        .spider-eye:nth-child(15),
+        .spider-eye:nth-child(16),
+        .spider-eye:nth-child(27),
+        .spider-eye:nth-child(28),
         /* Row 3: hide corners */
-        .spider-eye:nth-child(21),
-        /* Row 8: hide corners */
-        .spider-eye:nth-child(80),
-        /* Row 9: hide corners */
-        .spider-eye:nth-child(81),
-        .spider-eye:nth-child(90),
-        /* Row 10: hide corners */
-        .spider-eye:nth-child(91),
-        .spider-eye:nth-child(99),
-        .spider-eye:nth-child(100) {
+        .spider-eye:nth-child(29),
+        .spider-eye:nth-child(30),
+        .spider-eye:nth-child(41),
+        .spider-eye:nth-child(42),
+        /* Row 4: hide corners */
+        .spider-eye:nth-child(43),
+        .spider-eye:nth-child(56),
+        /* Row 11: hide corners */
+        .spider-eye:nth-child(141),
+        .spider-eye:nth-child(154),
+        /* Row 12: hide corners */
+        .spider-eye:nth-child(155),
+        .spider-eye:nth-child(156),
+        .spider-eye:nth-child(167),
+        .spider-eye:nth-child(168),
+        /* Row 13: hide corners */
+        .spider-eye:nth-child(169),
+        .spider-eye:nth-child(170),
+        .spider-eye:nth-child(181),
+        .spider-eye:nth-child(182),
+        /* Row 14: hide corners */
+        .spider-eye:nth-child(183),
+        .spider-eye:nth-child(184),
+        .spider-eye:nth-child(185),
+        .spider-eye:nth-child(194),
+        .spider-eye:nth-child(195),
+        .spider-eye:nth-child(196),
+        /* Row 15: hide orphaned eyes */
+        .spider-eye:nth-child(197),
+        .spider-eye:nth-child(198),
+        .spider-eye:nth-child(199),
+        .spider-eye:nth-child(200) {
             visibility: hidden;
         }
 
@@ -383,7 +412,7 @@
         // Spider mode state management
         let isSpiderModeActive = false;
         const spiderEyes = [];
-        const spiderEyeCount = 100;
+        const spiderEyeCount = 200;
 
         // Default values for new eye sets
         const defaultState = {
