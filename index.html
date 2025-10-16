@@ -139,6 +139,28 @@
             margin-left: 40px;
         }
 
+        /* Hide corner eyes to make circular shape */
+        /* Row 1: hide corners */
+        .spider-eye:nth-child(1),
+        .spider-eye:nth-child(2),
+        .spider-eye:nth-child(10),
+        /* Row 2: hide corners */
+        .spider-eye:nth-child(11),
+        .spider-eye:nth-child(20),
+        /* Row 3: hide corners */
+        .spider-eye:nth-child(21),
+        /* Row 8: hide corners */
+        .spider-eye:nth-child(80),
+        /* Row 9: hide corners */
+        .spider-eye:nth-child(81),
+        .spider-eye:nth-child(90),
+        /* Row 10: hide corners */
+        .spider-eye:nth-child(91),
+        .spider-eye:nth-child(99),
+        .spider-eye:nth-child(100) {
+            visibility: hidden;
+        }
+
         #eyes-stage.spider-mode-active {
             display: none;
         }
