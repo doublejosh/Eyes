@@ -127,7 +127,7 @@
         }
 
         .spider-eye.blinking {
-            transform: scaleY(0.1);
+            transform: scaleY(0.7);
         }
 
         /* Offset every other row (rows 2, 4, 6, 8, 10, 12, 14) */
@@ -235,13 +235,13 @@
         }
 
         @keyframes colorShift {
-            0% { fill: #228B22; }      /* Green */
-            16.67% { fill: #8B4513; }  /* Brown */
-            33.33% { fill: #4169E1; }  /* Blue */
-            50% { fill: #FF8C00; }     /* Orange */
-            66.67% { fill: #DC143C; }  /* Red */
-            83.33% { fill: #FF69B4; }  /* Pink */
-            100% { fill: #228B22; }    /* Back to Green */
+            0% { fill: #8b0000; }      /* Dark Red */
+            16.67% { fill: #4a0000; }  /* Darker Red */
+            33.33% { fill: #660000; }  /* Blood Red */
+            50% { fill: #8b0000; }     /* Dark Red */
+            66.67% { fill: #a00000; }  /* Crimson */
+            83.33% { fill: #660000; }  /* Blood Red */
+            100% { fill: #8b0000; }    /* Back to Dark Red */
         }
 
     </style>
@@ -272,18 +272,30 @@
             svg.setAttribute('data-eye-id', eyeId);
 
             svg.innerHTML = `
-                <!-- Eye white (circular) -->
-                <circle cx="50" cy="50" r="48" fill="white" stroke="#ddd" stroke-width="2"/>
+                <!-- Eye white (circular) with bloodshot veins -->
+                <circle cx="50" cy="50" r="48" fill="#fff8f0" stroke="#8b0000" stroke-width="2"/>
+
+                <!-- Blood vessels -->
+                <path d="M 50 2 Q 45 20, 50 50" stroke="#8b0000" stroke-width="0.5" fill="none" opacity="0.6"/>
+                <path d="M 50 98 Q 55 80, 50 50" stroke="#8b0000" stroke-width="0.5" fill="none" opacity="0.6"/>
+                <path d="M 2 50 Q 20 45, 50 50" stroke="#8b0000" stroke-width="0.5" fill="none" opacity="0.6"/>
+                <path d="M 98 50 Q 80 55, 50 50" stroke="#8b0000" stroke-width="0.5" fill="none" opacity="0.6"/>
+                <path d="M 15 15 Q 30 30, 50 50" stroke="#8b0000" stroke-width="0.4" fill="none" opacity="0.5"/>
+                <path d="M 85 85 Q 70 70, 50 50" stroke="#8b0000" stroke-width="0.4" fill="none" opacity="0.5"/>
+                <path d="M 85 15 Q 70 30, 50 50" stroke="#8b0000" stroke-width="0.4" fill="none" opacity="0.5"/>
+                <path d="M 15 85 Q 30 70, 50 50" stroke="#8b0000" stroke-width="0.4" fill="none" opacity="0.5"/>
 
                 <!-- Iris group -->
                 <g class="iris">
-                    <!-- Simple iris with color-changing fill -->
-                    <circle class="iris-main" cx="50" cy="50" r="20" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
+                    <!-- Large menacing iris with dark red color -->
+                    <circle class="iris-main" cx="50" cy="50" r="24" fill="#8b0000" stroke="#4a0000" stroke-width="2"/>
                 </g>
 
-                <!-- Black pupil -->
+                <!-- Black pupil (dilated for menacing effect) -->
                 <g class="iris">
-                    <circle cx="50" cy="50" r="8" fill="#000"/>
+                    <circle cx="50" cy="50" r="14" fill="#000"/>
+                    <!-- Sinister glint -->
+                    <circle cx="45" cy="45" r="2" fill="rgba(255,255,255,0.7)"/>
                 </g>
             `;
 
