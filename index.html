@@ -472,12 +472,12 @@
         // Focal point tracking constants
         const focalPointManualMoveStep = 2000; // Pixels per arrow key press
         const focalPointMoveDelayMin = 3000; // Min milliseconds between random moves
-        const focalPointMoveDelayMax = 6000; // Max milliseconds between random moves
+        const focalPointMoveDelayMax = 7000; // Max milliseconds between random moves
         const focalPointSmoothingFactor = 0.65; // Lerp factor for smooth movement
         const manualControlTimeout = 5000; // Milliseconds before resuming auto movement
 
         // Auto mode constants
-        const autoModeToggleDelayMin = 2000; // Min milliseconds between mode switches
+        const autoModeToggleDelayMin = 4000; // Min milliseconds between mode switches
         const autoModeToggleDelayMax = 12000; // Max milliseconds between mode switches
 
         // Spider eye animation constants
@@ -487,9 +487,9 @@
         const spiderEyeMoveDelayMax = 5000; // Max milliseconds between iris movements
         const spiderEyePulseDurationMin = 3; // Min seconds for pulse animation
         const spiderEyePulseDurationMax = 8; // Max seconds for pulse animation
-        const spiderEyeIrisMaxMovement = 15; // Maximum pixels iris can move
-        const spiderEyeTrackingMaxDistance = 15; // Maximum distance iris moves when tracking
-        const spiderEyeTrackingDistanceDivisor = 50; // Divisor for tracking distance calculation
+        const spiderEyeIrisMaxMovement = 12; // Maximum pixels iris can move (random mode)
+        const spiderEyeTrackingMaxDistance = 25; // Maximum distance iris moves when tracking
+        const spiderEyeTrackingDistanceDivisor = 30; // Divisor for tracking distance calculation
 
         // Generate random spawn position
         function getRandomSpawnPosition() {
