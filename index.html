@@ -469,6 +469,28 @@
         const gapStep = 3;
         const posStep = 40;
 
+        // Focal point tracking constants
+        const focalPointManualMoveStep = 2000; // Pixels per arrow key press
+        const focalPointMoveDelayMin = 3000; // Min milliseconds between random moves
+        const focalPointMoveDelayMax = 6000; // Max milliseconds between random moves
+        const focalPointSmoothingFactor = 0.65; // Lerp factor for smooth movement
+        const manualControlTimeout = 5000; // Milliseconds before resuming auto movement
+
+        // Auto mode constants
+        const autoModeToggleDelayMin = 2000; // Min milliseconds between mode switches
+        const autoModeToggleDelayMax = 12000; // Max milliseconds between mode switches
+
+        // Spider eye animation constants
+        const spiderEyeBlinkDelayMin = 4000; // Min milliseconds between blinks
+        const spiderEyeBlinkDelayMax = 20000; // Max milliseconds between blinks
+        const spiderEyeMoveDelayMin = 1000; // Min milliseconds between iris movements
+        const spiderEyeMoveDelayMax = 5000; // Max milliseconds between iris movements
+        const spiderEyePulseDurationMin = 3; // Min seconds for pulse animation
+        const spiderEyePulseDurationMax = 8; // Max seconds for pulse animation
+        const spiderEyeIrisMaxMovement = 15; // Maximum pixels iris can move
+        const spiderEyeTrackingMaxDistance = 15; // Maximum distance iris moves when tracking
+        const spiderEyeTrackingDistanceDivisor = 50; // Divisor for tracking distance calculation
+
         // Generate random spawn position
         function getRandomSpawnPosition() {
             const randomX = (Math.random() - 0.5) * 800; // -400 to 400
@@ -486,8 +508,8 @@
                 y: Math.random() * window.innerHeight
             };
 
-            // Schedule next move in 3-6 seconds
-            const nextMoveDelay = Math.random() * 3000 + 3000;
+            // Schedule next move
+            const nextMoveDelay = Math.random() * (focalPointMoveDelayMax - focalPointMoveDelayMin) + focalPointMoveDelayMin;
             focalPointTimeoutId = setTimeout(moveFocalPoint, nextMoveDelay);
         }
 
@@ -511,7 +533,7 @@
                 manualControlActive = false;
                 // Resume random movement
                 moveFocalPoint();
-            }, 5000);
+            }, manualControlTimeout);
         }
 
         function moveFocalPointManually(dx, dy) {
@@ -528,8 +550,8 @@
             if (!isTrackingMode) return;
 
             // Smoothly interpolate toward target
-            focalPoint.x += (focalPointTarget.x - focalPoint.x) * 0.05;
-            focalPoint.y += (focalPointTarget.y - focalPoint.y) * 0.05;
+            focalPoint.x += (focalPointTarget.x - focalPoint.x) * focalPointSmoothingFactor;
+            focalPoint.y += (focalPointTarget.y - focalPoint.y) * focalPointSmoothingFactor;
         }
 
         function updateEyeTracking() {
@@ -556,8 +578,7 @@
                 // Calculate angle and distance
                 const angle = Math.atan2(dy, dx);
                 const dist = Math.sqrt(dx * dx + dy * dy);
-                const maxDistance = 15;
-                const distance = Math.min(maxDistance, dist / 50);
+                const distance = Math.min(spiderEyeTrackingMaxDistance, dist / spiderEyeTrackingDistanceDivisor);
 
                 // Calculate iris offset
                 const offsetX = Math.cos(angle) * distance;
@@ -673,8 +694,8 @@
                 startFocalPointTracking();
             }
 
-            // Schedule next toggle in 2-12 seconds
-            const nextToggleDelay = Math.random() * 10000 + 2000;
+            // Schedule next toggle
+            const nextToggleDelay = Math.random() * (autoModeToggleDelayMax - autoModeToggleDelayMin) + autoModeToggleDelayMin;
             autoModeTimeoutId = setTimeout(autoToggleTracking, nextToggleDelay);
         }
 
@@ -719,8 +740,8 @@
                 eyeData.element.style.animation = currentAnimation;
             }, 400);
 
-            // Schedule next blink randomly between 4-20 seconds
-            const nextBlinkDelay = Math.random() * 16000 + 4000;
+            // Schedule next blink
+            const nextBlinkDelay = Math.random() * (spiderEyeBlinkDelayMax - spiderEyeBlinkDelayMin) + spiderEyeBlinkDelayMin;
             eyeData.blinkTimeoutId = setTimeout(() => blinkSpiderEye(eyeId), nextBlinkDelay);
         }
 
@@ -732,20 +753,18 @@
 
             const irises = eyeData.element.querySelectorAll('.iris');
 
-            // Generate random position within eye bounds (smaller range for smaller eyes)
-            const maxX = 15; // Maximum horizontal movement
-            const maxY = 15; // Maximum vertical movement
-            const randomX = (Math.random() - 0.5) * 2 * maxX;
-            const randomY = (Math.random() - 0.5) * 2 * maxY;
+            // Generate random position within eye bounds
+            const randomX = (Math.random() - 0.5) * 2 * spiderEyeIrisMaxMovement;
+            const randomY = (Math.random() - 0.5) * 2 * spiderEyeIrisMaxMovement;
 
             // Apply movement to all iris groups
             irises.forEach(iris => {
                 iris.style.transform = `translate(${randomX}px, ${randomY}px)`;
             });
 
-            // Schedule next movement randomly between 1-5 seconds (only if not in tracking mode)
+            // Schedule next movement (only if not in tracking mode)
             if (!isTrackingMode) {
-                const nextMoveDelay = Math.random() * 4000 + 1000;
+                const nextMoveDelay = Math.random() * (spiderEyeMoveDelayMax - spiderEyeMoveDelayMin) + spiderEyeMoveDelayMin;
                 eyeData.moveTimeoutId = setTimeout(() => moveSpiderEyeIris(eyeId), nextMoveDelay);
             }
         }
@@ -754,8 +773,8 @@
             const eyeData = spiderEyes[eyeId];
             if (!eyeData) return;
 
-            // Apply pulsing animation with random duration (3-8 seconds)
-            const pulseDuration = Math.random() * 5 + 3; // 3-8 seconds
+            // Apply pulsing animation with random duration
+            const pulseDuration = Math.random() * (spiderEyePulseDurationMax - spiderEyePulseDurationMin) + spiderEyePulseDurationMin;
             eyeData.element.style.animation = `eyePulse ${pulseDuration}s infinite ease-in-out`;
 
             // Apply color animations with random delay
@@ -1069,7 +1088,7 @@
             if (event.key === 'ArrowUp') {
                 event.preventDefault();
                 if (isTrackingMode) {
-                    moveFocalPointManually(0, -100);
+                    moveFocalPointManually(0, -focalPointManualMoveStep);
                 } else if (activeSetIndex !== -1) {
                     eyeSets[activeSetIndex].posY -= posStep;
                     updateEyeSetTransform(activeSetIndex);
@@ -1078,7 +1097,7 @@
             } else if (event.key === 'ArrowDown') {
                 event.preventDefault();
                 if (isTrackingMode) {
-                    moveFocalPointManually(0, 100);
+                    moveFocalPointManually(0, focalPointManualMoveStep);
                 } else if (activeSetIndex !== -1) {
                     eyeSets[activeSetIndex].posY += posStep;
                     updateEyeSetTransform(activeSetIndex);
@@ -1087,7 +1106,7 @@
             } else if (event.key === 'ArrowLeft') {
                 event.preventDefault();
                 if (isTrackingMode) {
-                    moveFocalPointManually(-100, 0);
+                    moveFocalPointManually(-focalPointManualMoveStep, 0);
                 } else if (activeSetIndex !== -1) {
                     eyeSets[activeSetIndex].posX -= posStep;
                     updateEyeSetTransform(activeSetIndex);
@@ -1096,7 +1115,7 @@
             } else if (event.key === 'ArrowRight') {
                 event.preventDefault();
                 if (isTrackingMode) {
-                    moveFocalPointManually(100, 0);
+                    moveFocalPointManually(focalPointManualMoveStep, 0);
                 } else if (activeSetIndex !== -1) {
                     eyeSets[activeSetIndex].posX += posStep;
                     updateEyeSetTransform(activeSetIndex);
