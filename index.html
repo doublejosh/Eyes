@@ -91,7 +91,7 @@
             left: 50%;
             transform: translateX(-50%);
             color: #fff;
-            font-size: 18px;
+            font-size: 60px;
             text-align: center;
             opacity: 0;
             transition: opacity 1s ease-in-out;
@@ -265,13 +265,13 @@
 
     <div class="instructions" id="instructions">
         <h3>Controls</h3>
-        <p><kbd>1-0</kbd> Toggle eye sets (up to 10)</p>
+        <p><kbd>1-0</kbd> Toggle eye sets (10)</p>
         <p><kbd>Q/W</kbd> Scale up/down</p>
         <p><kbd>E/R</kbd> Gap wider/closer</p>
         <p><kbd>↑↓←→</kbd> Move position</p>
-        <p><kbd>Z</kbd> Spider Mode</p>
-        <p><kbd>X</kbd> Eye tracking (spider mode)</p>
-        <p><kbd>C</kbd> Auto creepy mode (spider mode)</p>
+        <p><kbd>X</kbd> Eye tracking (beast mode)</p>
+        <p><kbd>C</kbd> Auto creepy (beast mode)</p>
+        <p><kbd>Z</kbd> Custom eyes</p>
         <p><kbd>Space</kbd> Help</p>
     </div>
 
@@ -808,6 +808,9 @@
                 for (let i = 0; i < spiderEyeCount; i++) {
                     startSpiderEyeAnimations(i);
                 }
+
+                // Start auto creepy mode by default
+                toggleAutoMode();
             } else {
                 // Exiting spider mode
                 isSpiderModeActive = false;
@@ -1116,10 +1119,6 @@
 
         // Initialize first eye set on page load
         document.addEventListener('DOMContentLoaded', () => {
-            // Create and show the first eye set (set 0, accessed by key '1')
-            // toggleEyeSet will automatically start its animations
-            toggleEyeSet(0);
-
             // Console message
             console.log('Press Space bar for help');
 
@@ -1133,6 +1132,9 @@
             setTimeout(() => {
                 helpMessage.classList.remove('visible');
             }, 5100);
+
+            // Start in spider mode by default
+            toggleSpiderMode();
         });
     </script>
 </body>
