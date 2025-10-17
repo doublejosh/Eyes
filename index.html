@@ -265,13 +265,13 @@
 
     <div class="instructions" id="instructions">
         <h3>Controls</h3>
+        <p><kbd>C</kbd> Auto creepy (beast mode)</p>
+        <p><kbd>X</kbd> Eye tracking (beast mode)</p>
+        <p><kbd>Z</kbd> Custom eyes</p>
         <p><kbd>1-0</kbd> Toggle eye sets (10)</p>
         <p><kbd>Q/W</kbd> Scale up/down</p>
         <p><kbd>E/R</kbd> Gap wider/closer</p>
         <p><kbd>↑↓←→</kbd> Move position</p>
-        <p><kbd>X</kbd> Eye tracking (beast mode)</p>
-        <p><kbd>C</kbd> Auto creepy (beast mode)</p>
-        <p><kbd>Z</kbd> Custom eyes</p>
         <p><kbd>Space</kbd> Help</p>
     </div>
 
@@ -446,6 +446,8 @@
         let focalPointAnimationId = null;
         let focalPointTimeoutId = null;
         let autoModeTimeoutId = null;
+        let manualControlActive = false;
+        let manualControlTimeoutId = null;
 
         // Default values for new eye sets
         const defaultState = {
@@ -476,7 +478,7 @@
 
         // Focal point tracking functions
         function moveFocalPoint() {
-            if (!isSpiderModeActive || !isTrackingMode) return;
+            if (!isSpiderModeActive || !isTrackingMode || manualControlActive) return;
 
             // Generate random target position
             focalPointTarget = {
@@ -487,6 +489,39 @@
             // Schedule next move in 3-6 seconds
             const nextMoveDelay = Math.random() * 3000 + 3000;
             focalPointTimeoutId = setTimeout(moveFocalPoint, nextMoveDelay);
+        }
+
+        function startManualControl() {
+            if (!isTrackingMode) return;
+
+            manualControlActive = true;
+
+            // Stop random focal point movement
+            if (focalPointTimeoutId) {
+                clearTimeout(focalPointTimeoutId);
+                focalPointTimeoutId = null;
+            }
+
+            // Reset the 5-second timer
+            if (manualControlTimeoutId) {
+                clearTimeout(manualControlTimeoutId);
+            }
+
+            manualControlTimeoutId = setTimeout(() => {
+                manualControlActive = false;
+                // Resume random movement
+                moveFocalPoint();
+            }, 5000);
+        }
+
+        function moveFocalPointManually(dx, dy) {
+            if (!isTrackingMode) return;
+
+            startManualControl();
+
+            // Move the focal point target
+            focalPointTarget.x = Math.max(0, Math.min(window.innerWidth, focalPointTarget.x + dx));
+            focalPointTarget.y = Math.max(0, Math.min(window.innerHeight, focalPointTarget.y + dy));
         }
 
         function updateFocalPointPosition() {
@@ -566,6 +601,13 @@
                 focalPointTimeoutId = null;
             }
 
+            // Stop manual control timer
+            if (manualControlTimeoutId) {
+                clearTimeout(manualControlTimeoutId);
+                manualControlTimeoutId = null;
+            }
+            manualControlActive = false;
+
             // Stop tracking loop
             if (focalPointAnimationId) {
                 cancelAnimationFrame(focalPointAnimationId);
@@ -574,21 +616,19 @@
         }
 
         function toggleTrackingMode() {
-            if (!isSpiderModeActive || isAutoMode) return;
+            if (!isSpiderModeActive) return;
 
-            if (isTrackingMode) {
-                // Switch to normal mode
-                stopFocalPointTracking();
-
-                // Restart random movement for all eyes
-                for (let i = 0; i < spiderEyes.length; i++) {
-                    const eyeData = spiderEyes[i];
-                    if (eyeData && !eyeData.moveTimeoutId) {
-                        const initialDelay = Math.random() * 1500 + 500;
-                        eyeData.moveTimeoutId = setTimeout(() => moveSpiderEyeIris(i), initialDelay);
-                    }
+            // If auto mode is active, turn it off first
+            if (isAutoMode) {
+                isAutoMode = false;
+                if (autoModeTimeoutId) {
+                    clearTimeout(autoModeTimeoutId);
+                    autoModeTimeoutId = null;
                 }
-            } else {
+            }
+
+            // Only turn on tracking mode, don't toggle off
+            if (!isTrackingMode) {
                 // Switch to tracking mode
                 // Stop all random movement
                 for (let i = 0; i < spiderEyes.length; i++) {
@@ -1025,6 +1065,45 @@
                 return;
             }
 
+            // Arrow keys - control focal point if in tracking mode, otherwise control eye position
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (isTrackingMode) {
+                    moveFocalPointManually(0, -100);
+                } else if (activeSetIndex !== -1) {
+                    eyeSets[activeSetIndex].posY -= posStep;
+                    updateEyeSetTransform(activeSetIndex);
+                }
+                return;
+            } else if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                if (isTrackingMode) {
+                    moveFocalPointManually(0, 100);
+                } else if (activeSetIndex !== -1) {
+                    eyeSets[activeSetIndex].posY += posStep;
+                    updateEyeSetTransform(activeSetIndex);
+                }
+                return;
+            } else if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                if (isTrackingMode) {
+                    moveFocalPointManually(-100, 0);
+                } else if (activeSetIndex !== -1) {
+                    eyeSets[activeSetIndex].posX -= posStep;
+                    updateEyeSetTransform(activeSetIndex);
+                }
+                return;
+            } else if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                if (isTrackingMode) {
+                    moveFocalPointManually(100, 0);
+                } else if (activeSetIndex !== -1) {
+                    eyeSets[activeSetIndex].posX += posStep;
+                    updateEyeSetTransform(activeSetIndex);
+                }
+                return;
+            }
+
             // Number keys 1-0 for eye set toggle (maps to sets 0-9)
             if (key >= '1' && key <= '9') {
                 event.preventDefault();
@@ -1059,24 +1138,6 @@
             } else if (key === 'r') {
                 event.preventDefault();
                 eyeSet.gap = Math.max(eyeSet.gap - gapStep, minGap);
-                updateEyeSetTransform(activeSetIndex);
-            }
-            // Arrow keys for position
-            else if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                eyeSet.posY -= posStep;
-                updateEyeSetTransform(activeSetIndex);
-            } else if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                eyeSet.posY += posStep;
-                updateEyeSetTransform(activeSetIndex);
-            } else if (event.key === 'ArrowLeft') {
-                event.preventDefault();
-                eyeSet.posX -= posStep;
-                updateEyeSetTransform(activeSetIndex);
-            } else if (event.key === 'ArrowRight') {
-                event.preventDefault();
-                eyeSet.posX += posStep;
                 updateEyeSetTransform(activeSetIndex);
             }
         });
