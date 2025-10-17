@@ -270,6 +270,7 @@
         <p><kbd>E/R</kbd> Gap wider/closer</p>
         <p><kbd>↑↓←→</kbd> Move position</p>
         <p><kbd>Z</kbd> Toggle Spider Mode</p>
+        <p><kbd>X</kbd> Toggle eye tracking (spider mode)</p>
         <p><kbd>Space</kbd> Toggle help</p>
     </div>
 
@@ -436,6 +437,13 @@
         const spiderEyes = [];
         const spiderEyeCount = 200;
 
+        // Eye tracking state
+        let isTrackingMode = false;
+        let focalPoint = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        let focalPointTarget = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        let focalPointAnimationId = null;
+        let focalPointTimeoutId = null;
+
         // Default values for new eye sets
         const defaultState = {
             scale: 1,
@@ -463,6 +471,135 @@
             return { posX: randomX, posY: randomY };
         }
 
+        // Focal point tracking functions
+        function moveFocalPoint() {
+            if (!isSpiderModeActive || !isTrackingMode) return;
+
+            // Generate random target position
+            focalPointTarget = {
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight
+            };
+
+            // Schedule next move in 3-6 seconds
+            const nextMoveDelay = Math.random() * 3000 + 3000;
+            focalPointTimeoutId = setTimeout(moveFocalPoint, nextMoveDelay);
+        }
+
+        function updateFocalPointPosition() {
+            if (!isTrackingMode) return;
+
+            // Smoothly interpolate toward target
+            focalPoint.x += (focalPointTarget.x - focalPoint.x) * 0.05;
+            focalPoint.y += (focalPointTarget.y - focalPoint.y) * 0.05;
+        }
+
+        function updateEyeTracking() {
+            if (!isSpiderModeActive || !isTrackingMode) return;
+
+            // Update focal point position
+            updateFocalPointPosition();
+
+            // Update all spider eyes
+            spiderEyes.forEach((eyeData, index) => {
+                if (!eyeData || !eyeData.element) return;
+
+                // Get eye position
+                const rect = eyeData.element.getBoundingClientRect();
+                const eyeCenter = {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                };
+
+                // Calculate vector to focal point
+                const dx = focalPoint.x - eyeCenter.x;
+                const dy = focalPoint.y - eyeCenter.y;
+
+                // Calculate angle and distance
+                const angle = Math.atan2(dy, dx);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const maxDistance = 15;
+                const distance = Math.min(maxDistance, dist / 50);
+
+                // Calculate iris offset
+                const offsetX = Math.cos(angle) * distance;
+                const offsetY = Math.sin(angle) * distance;
+
+                // Apply to iris elements
+                const irises = eyeData.element.querySelectorAll('.iris');
+                irises.forEach(iris => {
+                    iris.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+                });
+            });
+
+            // Continue loop
+            focalPointAnimationId = requestAnimationFrame(updateEyeTracking);
+        }
+
+        function startFocalPointTracking() {
+            if (isTrackingMode) return;
+
+            isTrackingMode = true;
+
+            // Initialize focal point at center
+            focalPoint = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+            focalPointTarget = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+            // Start movement
+            moveFocalPoint();
+
+            // Start tracking loop
+            focalPointAnimationId = requestAnimationFrame(updateEyeTracking);
+        }
+
+        function stopFocalPointTracking() {
+            if (!isTrackingMode) return;
+
+            isTrackingMode = false;
+
+            // Stop movement timer
+            if (focalPointTimeoutId) {
+                clearTimeout(focalPointTimeoutId);
+                focalPointTimeoutId = null;
+            }
+
+            // Stop tracking loop
+            if (focalPointAnimationId) {
+                cancelAnimationFrame(focalPointAnimationId);
+                focalPointAnimationId = null;
+            }
+        }
+
+        function toggleTrackingMode() {
+            if (!isSpiderModeActive) return;
+
+            if (isTrackingMode) {
+                // Switch to normal mode
+                stopFocalPointTracking();
+
+                // Restart random movement for all eyes
+                for (let i = 0; i < spiderEyes.length; i++) {
+                    const eyeData = spiderEyes[i];
+                    if (eyeData && !eyeData.moveTimeoutId) {
+                        const initialDelay = Math.random() * 1500 + 500;
+                        eyeData.moveTimeoutId = setTimeout(() => moveSpiderEyeIris(i), initialDelay);
+                    }
+                }
+            } else {
+                // Switch to tracking mode
+                // Stop all random movement
+                for (let i = 0; i < spiderEyes.length; i++) {
+                    const eyeData = spiderEyes[i];
+                    if (eyeData && eyeData.moveTimeoutId) {
+                        clearTimeout(eyeData.moveTimeoutId);
+                        eyeData.moveTimeoutId = null;
+                    }
+                }
+
+                startFocalPointTracking();
+            }
+        }
+
         // Spider mode functions
         function blinkSpiderEye(eyeId) {
             if (!isSpiderModeActive) return;
@@ -487,7 +624,7 @@
         }
 
         function moveSpiderEyeIris(eyeId) {
-            if (!isSpiderModeActive) return;
+            if (!isSpiderModeActive || isTrackingMode) return;
 
             const eyeData = spiderEyes[eyeId];
             if (!eyeData) return;
@@ -505,9 +642,11 @@
                 iris.style.transform = `translate(${randomX}px, ${randomY}px)`;
             });
 
-            // Schedule next movement randomly between 1-5 seconds
-            const nextMoveDelay = Math.random() * 4000 + 1000;
-            eyeData.moveTimeoutId = setTimeout(() => moveSpiderEyeIris(eyeId), nextMoveDelay);
+            // Schedule next movement randomly between 1-5 seconds (only if not in tracking mode)
+            if (!isTrackingMode) {
+                const nextMoveDelay = Math.random() * 4000 + 1000;
+                eyeData.moveTimeoutId = setTimeout(() => moveSpiderEyeIris(eyeId), nextMoveDelay);
+            }
         }
 
         function startSpiderEyeAnimations(eyeId) {
@@ -532,9 +671,11 @@
             const initialBlinkDelay = Math.random() * 2000 + 1000;
             eyeData.blinkTimeoutId = setTimeout(() => blinkSpiderEye(eyeId), initialBlinkDelay);
 
-            // Start iris movement with initial random delay (0.5-2 seconds)
-            const initialMoveDelay = Math.random() * 1500 + 500;
-            eyeData.moveTimeoutId = setTimeout(() => moveSpiderEyeIris(eyeId), initialMoveDelay);
+            // Start iris movement with initial random delay (0.5-2 seconds) - only if not in tracking mode
+            if (!isTrackingMode) {
+                const initialMoveDelay = Math.random() * 1500 + 500;
+                eyeData.moveTimeoutId = setTimeout(() => moveSpiderEyeIris(eyeId), initialMoveDelay);
+            }
         }
 
         function stopSpiderEyeAnimations(eyeId) {
@@ -609,6 +750,11 @@
             } else {
                 // Exiting spider mode
                 isSpiderModeActive = false;
+
+                // Stop tracking if active
+                if (isTrackingMode) {
+                    stopFocalPointTracking();
+                }
 
                 // Stop all spider eye animations
                 for (let i = 0; i < spiderEyeCount; i++) {
@@ -789,6 +935,13 @@
             if (key === 'z') {
                 event.preventDefault();
                 toggleSpiderMode();
+                return;
+            }
+
+            // X key to toggle eye tracking (spider mode only)
+            if (key === 'x') {
+                event.preventDefault();
+                toggleTrackingMode();
                 return;
             }
 
