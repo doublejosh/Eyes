@@ -271,6 +271,7 @@
         <p><kbd>↑↓←→</kbd> Move position</p>
         <p><kbd>Z</kbd> Toggle Spider Mode</p>
         <p><kbd>X</kbd> Toggle eye tracking (spider mode)</p>
+        <p><kbd>C</kbd> Toggle auto mode (spider mode)</p>
         <p><kbd>Space</kbd> Toggle help</p>
     </div>
 
@@ -439,10 +440,12 @@
 
         // Eye tracking state
         let isTrackingMode = false;
+        let isAutoMode = false;
         let focalPoint = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
         let focalPointTarget = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
         let focalPointAnimationId = null;
         let focalPointTimeoutId = null;
+        let autoModeTimeoutId = null;
 
         // Default values for new eye sets
         const defaultState = {
@@ -571,7 +574,7 @@
         }
 
         function toggleTrackingMode() {
-            if (!isSpiderModeActive) return;
+            if (!isSpiderModeActive || isAutoMode) return;
 
             if (isTrackingMode) {
                 // Switch to normal mode
@@ -597,6 +600,64 @@
                 }
 
                 startFocalPointTracking();
+            }
+        }
+
+        function autoToggleTracking() {
+            if (!isSpiderModeActive || !isAutoMode) return;
+
+            // Toggle tracking mode
+            if (isTrackingMode) {
+                // Switch to normal mode
+                stopFocalPointTracking();
+
+                // Restart random movement for all eyes
+                for (let i = 0; i < spiderEyes.length; i++) {
+                    const eyeData = spiderEyes[i];
+                    if (eyeData && !eyeData.moveTimeoutId) {
+                        const initialDelay = Math.random() * 1500 + 500;
+                        eyeData.moveTimeoutId = setTimeout(() => moveSpiderEyeIris(i), initialDelay);
+                    }
+                }
+            } else {
+                // Switch to tracking mode
+                // Stop all random movement
+                for (let i = 0; i < spiderEyes.length; i++) {
+                    const eyeData = spiderEyes[i];
+                    if (eyeData && eyeData.moveTimeoutId) {
+                        clearTimeout(eyeData.moveTimeoutId);
+                        eyeData.moveTimeoutId = null;
+                    }
+                }
+
+                startFocalPointTracking();
+            }
+
+            // Schedule next toggle in 2-12 seconds
+            const nextToggleDelay = Math.random() * 10000 + 2000;
+            autoModeTimeoutId = setTimeout(autoToggleTracking, nextToggleDelay);
+        }
+
+        function toggleAutoMode() {
+            if (!isSpiderModeActive) return;
+
+            if (isAutoMode) {
+                // Turn off auto mode
+                isAutoMode = false;
+
+                // Clear auto mode timer
+                if (autoModeTimeoutId) {
+                    clearTimeout(autoModeTimeoutId);
+                    autoModeTimeoutId = null;
+                }
+
+                // Leave current tracking state as is
+            } else {
+                // Turn on auto mode
+                isAutoMode = true;
+
+                // Start auto toggling
+                autoToggleTracking();
             }
         }
 
@@ -750,6 +811,15 @@
             } else {
                 // Exiting spider mode
                 isSpiderModeActive = false;
+
+                // Stop auto mode if active
+                if (isAutoMode) {
+                    isAutoMode = false;
+                    if (autoModeTimeoutId) {
+                        clearTimeout(autoModeTimeoutId);
+                        autoModeTimeoutId = null;
+                    }
+                }
 
                 // Stop tracking if active
                 if (isTrackingMode) {
@@ -942,6 +1012,13 @@
             if (key === 'x') {
                 event.preventDefault();
                 toggleTrackingMode();
+                return;
+            }
+
+            // C key to toggle auto mode (spider mode only)
+            if (key === 'c') {
+                event.preventDefault();
+                toggleAutoMode();
                 return;
             }
 
