@@ -469,6 +469,10 @@
         let manualControlActive = false;
         let manualControlTimeoutId = null;
 
+        // Gamepad state
+        let gamepadAnimationId = null;
+        let connectedGamepad = null;
+
         // Default values for new eye sets
         const defaultState = {
             scale: 1,
@@ -496,6 +500,10 @@
         const focalPointSmoothingFactor = 0.65; // Lerp factor for smooth movement
         const manualControlTimeout = 5000; // Milliseconds before resuming auto movement
 
+        // Gamepad constants
+        const gamepadDeadzone = 0.15; // Ignore small joystick movements below this threshold
+        const gamepadSensitivity = 100; // Multiplier for joystick movement speed
+
         // Auto mode constants
         const autoModeToggleDelayMin = 4000; // Min milliseconds between mode switches
         const autoModeToggleDelayMax = 12000; // Max milliseconds between mode switches
@@ -516,6 +524,61 @@
             const randomX = (Math.random() - 0.5) * 800; // -400 to 400
             const randomY = (Math.random() - 0.5) * 400; // -200 to 200
             return { posX: randomX, posY: randomY };
+        }
+
+        // Gamepad functions
+        function pollGamepad() {
+            if (!isTrackingMode) {
+                if (gamepadAnimationId) {
+                    cancelAnimationFrame(gamepadAnimationId);
+                    gamepadAnimationId = null;
+                }
+                return;
+            }
+
+            const gamepads = navigator.getGamepads();
+            let activeGamepad = null;
+
+            // Find first connected gamepad
+            for (let i = 0; i < gamepads.length; i++) {
+                if (gamepads[i]) {
+                    activeGamepad = gamepads[i];
+                    break;
+                }
+            }
+
+            if (activeGamepad) {
+                // Read left stick axes (axes[0] = X, axes[1] = Y)
+                const axisX = activeGamepad.axes[0];
+                const axisY = activeGamepad.axes[1];
+
+                // Apply deadzone
+                const deadzonedX = Math.abs(axisX) > gamepadDeadzone ? axisX : 0;
+                const deadzonedY = Math.abs(axisY) > gamepadDeadzone ? axisY : 0;
+
+                // If joystick is moved, update focal point
+                if (deadzonedX !== 0 || deadzonedY !== 0) {
+                    const dx = deadzonedX * gamepadSensitivity;
+                    const dy = deadzonedY * gamepadSensitivity;
+                    moveFocalPointManually(dx, dy);
+                }
+            }
+
+            // Continue polling
+            gamepadAnimationId = requestAnimationFrame(pollGamepad);
+        }
+
+        function startGamepadPolling() {
+            if (!gamepadAnimationId && isTrackingMode) {
+                gamepadAnimationId = requestAnimationFrame(pollGamepad);
+            }
+        }
+
+        function stopGamepadPolling() {
+            if (gamepadAnimationId) {
+                cancelAnimationFrame(gamepadAnimationId);
+                gamepadAnimationId = null;
+            }
         }
 
         // Focal point tracking functions
@@ -629,6 +692,9 @@
 
             // Start tracking loop
             focalPointAnimationId = requestAnimationFrame(updateEyeTracking);
+
+            // Start gamepad polling
+            startGamepadPolling();
         }
 
         function stopFocalPointTracking() {
@@ -654,6 +720,9 @@
                 cancelAnimationFrame(focalPointAnimationId);
                 focalPointAnimationId = null;
             }
+
+            // Stop gamepad polling
+            stopGamepadPolling();
         }
 
         function toggleTrackingMode() {
@@ -1220,6 +1289,24 @@
 
             activeSetIndex = setIndex;
         }
+
+        // Gamepad event listeners
+        window.addEventListener('gamepadconnected', (event) => {
+            connectedGamepad = event.gamepad;
+            console.log(`Gamepad connected: ${event.gamepad.id}`);
+            console.log('Use left stick to control focal point in tracking mode');
+
+            // Start polling if in tracking mode
+            if (isTrackingMode) {
+                startGamepadPolling();
+            }
+        });
+
+        window.addEventListener('gamepaddisconnected', (event) => {
+            console.log(`Gamepad disconnected: ${event.gamepad.id}`);
+            connectedGamepad = null;
+            stopGamepadPolling();
+        });
 
         // Initialize first eye set on page load
         document.addEventListener('DOMContentLoaded', () => {

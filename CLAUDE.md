@@ -42,3 +42,9 @@ Spider Mode
 - Simplified rendering (no gradients or blur filters) for performance with high eye count
 - All eyes share synchronized color cycling animations
 - Spider mode hides normal eye pairs when active
+- Two tracking modes available:
+  - X: Eye tracking mode - all eyes collectively follow a focal point that moves randomly
+  - C: Auto creepy mode - automatically toggles between tracking and random movement every 4-12 seconds
+- Manual focal point control via arrow keys or gamepad left stick (100px/frame sensitivity, 0.15 deadzone)
+- Arrow keys and joystick activate manual control, resuming automatic movement after 5 seconds of no input
+- Hidden corner eyes (~35) excluded from JavaScript processing for better performance
