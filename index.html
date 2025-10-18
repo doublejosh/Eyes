@@ -494,7 +494,7 @@
         const posStep = 40;
 
         // Focal point tracking constants
-        const focalPointManualMoveStep = 2000; // Pixels per arrow key press
+        const focalPointManualMoveStep = 1000; // Pixels per arrow key press
         const focalPointMoveDelayMin = 3000; // Min milliseconds between random moves
         const focalPointMoveDelayMax = 7000; // Max milliseconds between random moves
         const focalPointSmoothingFactor = 0.65; // Lerp factor for smooth movement
@@ -992,11 +992,18 @@
                 // Show normal eyes
                 eyesStage.classList.remove('spider-mode-active');
 
-                // Restart animations for visible normal eye sets
+                // Check if any eye sets are visible
+                let hasVisibleSets = false;
                 for (let i = 0; i < eyeSets.length; i++) {
                     if (eyeSets[i] && eyeSets[i].visible) {
+                        hasVisibleSets = true;
                         startEyeSetAnimations(i);
                     }
+                }
+
+                // If no eye sets are visible, show the first set
+                if (!hasVisibleSets) {
+                    toggleEyeSet(0);
                 }
             }
         }
