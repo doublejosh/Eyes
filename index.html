@@ -436,6 +436,28 @@
         const spiderEyes = [];
         const spiderEyeCount = 200;
 
+        // Hidden eye indices (corner eyes that are hidden via CSS - don't process these)
+        const hiddenEyeIndices = new Set([
+            // Row 1
+            0, 1, 2, 3, 11, 12, 13,
+            // Row 2
+            14, 15, 26, 27,
+            // Row 3
+            28, 29, 41,
+            // Row 4
+            42, 55,
+            // Row 11
+            140,
+            // Row 12
+            154, 166, 167,
+            // Row 13
+            168, 169, 180, 181,
+            // Row 14
+            182, 183, 184, 193, 194, 195,
+            // Row 15
+            196, 197, 198, 199
+        ]);
+
         // Eye tracking state
         let isTrackingMode = false;
         let isAutoMode = false;
@@ -558,7 +580,7 @@
             // Update focal point position
             updateFocalPointPosition();
 
-            // Update all spider eyes
+            // Update all visible spider eyes (hidden corner eyes are excluded from array)
             spiderEyes.forEach((eyeData, index) => {
                 if (!eyeData || !eyeData.element) return;
 
@@ -823,16 +845,20 @@
         function initializeSpiderMode() {
             const spiderStage = document.getElementById('spider-stage');
 
-            // Create 25 spider eyes if not already created
+            // Create all spider eyes if not already created
             if (spiderEyes.length === 0) {
                 for (let i = 0; i < spiderEyeCount; i++) {
                     const eyeElement = createSpiderEye(i);
                     spiderStage.appendChild(eyeElement);
-                    spiderEyes.push({
-                        element: eyeElement,
-                        blinkTimeoutId: null,
-                        moveTimeoutId: null
-                    });
+
+                    // Only track visible eyes (skip hidden corner eyes)
+                    if (!hiddenEyeIndices.has(i)) {
+                        spiderEyes.push({
+                            element: eyeElement,
+                            blinkTimeoutId: null,
+                            moveTimeoutId: null
+                        });
+                    }
                 }
             }
         }
@@ -861,8 +887,8 @@
                 // Show spider grid
                 spiderStage.classList.add('active');
 
-                // Start all spider eye animations
-                for (let i = 0; i < spiderEyeCount; i++) {
+                // Start all spider eye animations (only for visible eyes)
+                for (let i = 0; i < spiderEyes.length; i++) {
                     startSpiderEyeAnimations(i);
                 }
 
@@ -886,8 +912,8 @@
                     stopFocalPointTracking();
                 }
 
-                // Stop all spider eye animations
-                for (let i = 0; i < spiderEyeCount; i++) {
+                // Stop all spider eye animations (only for visible eyes)
+                for (let i = 0; i < spiderEyes.length; i++) {
                     stopSpiderEyeAnimations(i);
                 }
 
