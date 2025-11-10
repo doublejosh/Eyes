@@ -307,6 +307,7 @@
         <p><kbd>C</kbd> Auto creepy (beast mode)</p>
         <p><kbd>X</kbd> Eye tracking (beast mode)</p>
         <p><kbd>Z</kbd> Custom eyes</p>
+        <p><kbd>T</kbd> Toggle tears (drips)</p>
         <p><kbd>1-0</kbd> Toggle eye sets (10)</p>
         <p><kbd>Q/W</kbd> Scale up/down</p>
         <p><kbd>E/R</kbd> Gap wider/closer</p>
@@ -517,6 +518,9 @@
         // localStorage persistence state
         const localStorageKey = 'eyesAppState';
         let saveStateDebounceTimer = null;
+
+        // Drip toggle state
+        let dripsEnabled = true;
 
         // Gamepad state
         let gamepadAnimationId = null;
@@ -957,6 +961,7 @@
 
         // Drip spawning functions
         function dripSpiderEye(eyeId) {
+            if (!dripsEnabled) return;
             if (!isSpiderModeActive) return;
 
             const eyeData = spiderEyes[eyeId];
@@ -978,6 +983,7 @@
         }
 
         function dripEyeSet(setIndex) {
+            if (!dripsEnabled) return;
             const eyeSet = eyeSets[setIndex];
             if (!eyeSet || !eyeSet.visible) return;
 
@@ -1328,6 +1334,52 @@
             });
         }
 
+        // Stop all drips for all eyes
+        function stopAllDrips() {
+            // Stop drips for normal eye sets
+            for (let i = 0; i < maxSets; i++) {
+                const eyeSet = eyeSets[i];
+                if (eyeSet && eyeSet.dripTimeoutId) {
+                    clearTimeout(eyeSet.dripTimeoutId);
+                    eyeSet.dripTimeoutId = null;
+                }
+            }
+
+            // Stop drips for spider eyes
+            if (isSpiderModeActive) {
+                for (let eyeId = 0; eyeId < spiderEyes.length; eyeId++) {
+                    const eyeData = spiderEyes[eyeId];
+                    if (eyeData && eyeData.dripTimeoutId) {
+                        clearTimeout(eyeData.dripTimeoutId);
+                        eyeData.dripTimeoutId = null;
+                    }
+                }
+            }
+        }
+
+        // Start drips for all visible eyes
+        function startAllDrips() {
+            // Start drips for visible normal eye sets
+            for (let i = 0; i < maxSets; i++) {
+                const eyeSet = eyeSets[i];
+                if (eyeSet && eyeSet.visible) {
+                    const initialDripDelay = Math.random() * 2000 + 1000;
+                    eyeSet.dripTimeoutId = setTimeout(() => dripEyeSet(i), initialDripDelay);
+                }
+            }
+
+            // Start drips for spider eyes
+            if (isSpiderModeActive) {
+                for (let eyeId = 0; eyeId < spiderEyes.length; eyeId++) {
+                    const eyeData = spiderEyes[eyeId];
+                    if (eyeData) {
+                        const initialDripDelay = Math.random() * 3000 + 2000;
+                        eyeData.dripTimeoutId = setTimeout(() => dripSpiderEye(eyeId), initialDripDelay);
+                    }
+                }
+            }
+        }
+
         // Create or get an eye set
         function getOrCreateEyeSet(setIndex) {
             if (eyeSets[setIndex]) {
@@ -1363,7 +1415,8 @@
             try {
                 const state = {
                     eyeSets: [],
-                    activeSetIndex: activeSetIndex
+                    activeSetIndex: activeSetIndex,
+                    dripsEnabled: dripsEnabled
                 };
 
                 // Save only persistable properties for each eye set
@@ -1439,6 +1492,19 @@
             if (key === 'c') {
                 event.preventDefault();
                 toggleAutoMode();
+                return;
+            }
+
+            // T key to toggle drips (tears)
+            if (key === 't') {
+                event.preventDefault();
+                dripsEnabled = !dripsEnabled;
+                if (dripsEnabled) {
+                    startAllDrips();
+                } else {
+                    stopAllDrips();
+                }
+                debouncedSaveState();
                 return;
             }
 
@@ -1673,6 +1739,9 @@
 
                 // Restore active set index
                 activeSetIndex = savedState.activeSetIndex;
+
+                // Restore drip toggle state (default to true if not present)
+                dripsEnabled = savedState.dripsEnabled !== undefined ? savedState.dripsEnabled : true;
 
                 console.log('Restored eye sets from localStorage');
             } else {
