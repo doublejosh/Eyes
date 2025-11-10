@@ -252,12 +252,53 @@
             50% { transform: scaleY(0.85); }
         }
 
+        /* Drip container and animations */
+        #drips-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .drip {
+            position: absolute;
+            background: var(--drip-color, #7a9b3d);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            opacity: 0;
+            filter: blur(1px);
+            pointer-events: none;
+        }
+
+        .drip.active {
+            animation: dripFall var(--drip-duration, 2s) ease-in forwards;
+        }
+
+        @keyframes dripFall {
+            0% {
+                opacity: 0.7;
+                transform: translate(var(--start-x, 0), var(--start-y, 0)) scaleY(1);
+            }
+            20% {
+                opacity: 0.8;
+                transform: translate(calc(var(--start-x, 0) + var(--drift-x, 0px)), calc(var(--start-y, 0) + 30px)) scaleY(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(var(--start-x, 0) + var(--drift-x, 0px)), calc(var(--start-y, 0) + var(--fall-distance, 200px))) scaleY(2);
+            }
+        }
+
     </style>
 </head>
 <body>
     <div id="eyes-stage"></div>
 
     <div id="spider-stage" class="spider-grid"></div>
+
+    <div id="drips-container"></div>
 
     <div class="help-message" id="help-message">Space bar for help</div>
 
@@ -469,6 +510,14 @@
         let manualControlActive = false;
         let manualControlTimeoutId = null;
 
+        // Arrow key hold state for quadratic acceleration
+        let heldArrowKeys = {}; // Tracks held arrow keys: { ArrowUp: timestamp, ... }
+        let arrowKeyAnimationId = null; // requestAnimationFrame ID for continuous movement
+
+        // localStorage persistence state
+        const localStorageKey = 'eyesAppState';
+        let saveStateDebounceTimer = null;
+
         // Gamepad state
         let gamepadAnimationId = null;
         let connectedGamepad = null;
@@ -481,6 +530,7 @@
             posY: 0,
             blinkTimeoutId: null,
             moveTimeoutId: null,
+            dripTimeoutId: null,
             everShown: false
         };
 
@@ -492,6 +542,14 @@
         const maxGap = 200;
         const gapStep = 3;
         const posStep = 40;
+
+        // Arrow key acceleration constants
+        const arrowKeyBaseSpeed = 2; // Minimum speed for quick taps (pixels/frame)
+        const arrowKeyAcceleration = 150; // Acceleration multiplier for quadratic curve
+        const arrowKeyMaxSpeed = 100; // Maximum speed cap (pixels/frame)
+
+        // localStorage constants
+        const saveStateDebounceDelay = 500; // Milliseconds to wait before saving state
 
         // Focal point tracking constants
         const focalPointManualMoveStep = 1000; // Pixels per arrow key press
@@ -518,6 +576,92 @@
         const spiderEyeIrisMaxMovement = 12; // Maximum pixels iris can move (random mode)
         const spiderEyeTrackingMaxDistance = 25; // Maximum distance iris moves when tracking
         const spiderEyeTrackingDistanceDivisor = 30; // Divisor for tracking distance calculation
+
+        // Drip animation constants
+        const dripPoolSize = 30; // Number of reusable drip elements
+        const maxSimultaneousDrips = 15; // Maximum drips active at once
+        const dripDelayMinSpider = 5000; // Min milliseconds between drips (spider mode)
+        const dripDelayMaxSpider = 12000; // Max milliseconds between drips (spider mode)
+        const dripDelayMinNormal = 2000; // Min milliseconds between drips (normal mode)
+        const dripDelayMaxNormal = 6000; // Max milliseconds between drips (normal mode)
+        const dripDurationMin = 1500; // Min milliseconds for drip fall animation
+        const dripDurationMax = 2500; // Max milliseconds for drip fall animation
+        const dripColors = ['#7a9b3d', '#9b9b3d', '#8b7a3d', '#9b5a5a', '#7a8b3d']; // Sickly liquid colors
+
+        // Drip object pool management
+        const dripPool = [];
+        let activeDripCount = 0;
+
+        function initializeDripPool() {
+            const container = document.getElementById('drips-container');
+            for (let i = 0; i < dripPoolSize; i++) {
+                const drip = document.createElement('div');
+                drip.className = 'drip';
+                container.appendChild(drip);
+                dripPool.push({
+                    element: drip,
+                    inUse: false
+                });
+            }
+        }
+
+        function getAvailableDrip() {
+            if (activeDripCount >= maxSimultaneousDrips) return null;
+
+            for (let i = 0; i < dripPool.length; i++) {
+                if (!dripPool[i].inUse) {
+                    dripPool[i].inUse = true;
+                    activeDripCount++;
+                    return dripPool[i];
+                }
+            }
+            return null;
+        }
+
+        function releaseDrip(dripData) {
+            if (!dripData) return;
+            dripData.inUse = false;
+            dripData.element.classList.remove('active');
+            dripData.element.style.cssText = '';
+            activeDripCount--;
+        }
+
+        function spawnDrip(x, y) {
+            const dripData = getAvailableDrip();
+            if (!dripData) return; // Pool exhausted or max limit reached
+
+            const drip = dripData.element;
+
+            // Random drip properties
+            const color = dripColors[Math.floor(Math.random() * dripColors.length)];
+            const width = Math.random() * 6 + 4; // 4-10px
+            const height = Math.random() * 10 + 8; // 8-18px
+            const duration = Math.random() * (dripDurationMax - dripDurationMin) + dripDurationMin;
+            const fallDistance = Math.random() * 150 + 150; // 150-300px
+            const driftX = (Math.random() - 0.5) * 30; // -15 to 15px horizontal drift
+
+            // Set CSS custom properties and styles
+            drip.style.cssText = `
+                --drip-color: ${color};
+                --drip-duration: ${duration}ms;
+                --start-x: 0px;
+                --start-y: 0px;
+                --fall-distance: ${fallDistance}px;
+                --drift-x: ${driftX}px;
+                width: ${width}px;
+                height: ${height}px;
+                left: ${x}px;
+                top: ${y}px;
+            `;
+
+            // Start animation
+            drip.classList.add('active');
+
+            // Release drip after animation completes
+            setTimeout(() => {
+                releaseDrip(dripData);
+            }, duration);
+        }
 
         // Generate random spawn position
         function getRandomSpawnPosition() {
@@ -811,6 +955,51 @@
             }
         }
 
+        // Drip spawning functions
+        function dripSpiderEye(eyeId) {
+            if (!isSpiderModeActive) return;
+
+            const eyeData = spiderEyes[eyeId];
+            if (!eyeData) return;
+
+            // Get eye position on screen
+            const rect = eyeData.element.getBoundingClientRect();
+
+            // Spawn drip at random position along bottom of eye
+            const randomXOffset = (Math.random() - 0.5) * rect.width * 0.6; // Random position along bottom
+            const spawnX = rect.left + rect.width / 2 + randomXOffset;
+            const spawnY = rect.bottom - 5; // Just below eye
+
+            spawnDrip(spawnX, spawnY);
+
+            // Schedule next drip
+            const nextDripDelay = Math.random() * (dripDelayMaxSpider - dripDelayMinSpider) + dripDelayMinSpider;
+            eyeData.dripTimeoutId = setTimeout(() => dripSpiderEye(eyeId), nextDripDelay);
+        }
+
+        function dripEyeSet(setIndex) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet || !eyeSet.visible) return;
+
+            const eyes = eyeSet.element.querySelectorAll('.eye');
+
+            // Drip from both eyes
+            eyes.forEach(eye => {
+                const rect = eye.getBoundingClientRect();
+
+                // Spawn drip at random position along bottom of eye
+                const randomXOffset = (Math.random() - 0.5) * rect.width * 0.5;
+                const spawnX = rect.left + rect.width / 2 + randomXOffset;
+                const spawnY = rect.bottom - 10;
+
+                spawnDrip(spawnX, spawnY);
+            });
+
+            // Schedule next drip
+            const nextDripDelay = Math.random() * (dripDelayMaxNormal - dripDelayMinNormal) + dripDelayMinNormal;
+            eyeSet.dripTimeoutId = setTimeout(() => dripEyeSet(setIndex), nextDripDelay);
+        }
+
         // Spider mode functions
         function blinkSpiderEye(eyeId) {
             if (!isSpiderModeActive) return;
@@ -885,6 +1074,10 @@
                 const initialMoveDelay = Math.random() * 1500 + 500;
                 eyeData.moveTimeoutId = setTimeout(() => moveSpiderEyeIris(eyeId), initialMoveDelay);
             }
+
+            // Start dripping with initial random delay (2-5 seconds)
+            const initialDripDelay = Math.random() * 3000 + 2000;
+            eyeData.dripTimeoutId = setTimeout(() => dripSpiderEye(eyeId), initialDripDelay);
         }
 
         function stopSpiderEyeAnimations(eyeId) {
@@ -899,6 +1092,10 @@
             if (eyeData.moveTimeoutId) {
                 clearTimeout(eyeData.moveTimeoutId);
                 eyeData.moveTimeoutId = null;
+            }
+            if (eyeData.dripTimeoutId) {
+                clearTimeout(eyeData.dripTimeoutId);
+                eyeData.dripTimeoutId = null;
             }
 
             // Remove pulse animation from eye element
@@ -925,7 +1122,8 @@
                         spiderEyes.push({
                             element: eyeElement,
                             blinkTimeoutId: null,
-                            moveTimeoutId: null
+                            moveTimeoutId: null,
+                            dripTimeoutId: null
                         });
                     }
                 }
@@ -1093,6 +1291,10 @@
             // Start iris movement with initial random delay (0.5-2 seconds)
             const initialMoveDelay = Math.random() * 1500 + 500;
             eyeSet.moveTimeoutId = setTimeout(() => moveEyeSetIris(setIndex), initialMoveDelay);
+
+            // Start dripping with initial random delay (1-3 seconds)
+            const initialDripDelay = Math.random() * 2000 + 1000;
+            eyeSet.dripTimeoutId = setTimeout(() => dripEyeSet(setIndex), initialDripDelay);
         }
 
         // Stop all animations for an eye set
@@ -1108,6 +1310,10 @@
             if (eyeSet.moveTimeoutId) {
                 clearTimeout(eyeSet.moveTimeoutId);
                 eyeSet.moveTimeoutId = null;
+            }
+            if (eyeSet.dripTimeoutId) {
+                clearTimeout(eyeSet.dripTimeoutId);
+                eyeSet.dripTimeoutId = null;
             }
 
             // Remove color animations
@@ -1152,6 +1358,58 @@
             eyeSet.element.style.gap = `${gap}vw`;
         }
 
+        // Save state to localStorage
+        function saveStateToLocalStorage() {
+            try {
+                const state = {
+                    eyeSets: [],
+                    activeSetIndex: activeSetIndex
+                };
+
+                // Save only persistable properties for each eye set
+                for (let i = 0; i < maxSets; i++) {
+                    const eyeSet = eyeSets[i];
+                    if (eyeSet) {
+                        state.eyeSets[i] = {
+                            scale: eyeSet.scale,
+                            gap: eyeSet.gap,
+                            posX: eyeSet.posX,
+                            posY: eyeSet.posY,
+                            visible: eyeSet.visible,
+                            everShown: eyeSet.everShown
+                        };
+                    } else {
+                        state.eyeSets[i] = null;
+                    }
+                }
+
+                localStorage.setItem(localStorageKey, JSON.stringify(state));
+            } catch (error) {
+                console.error('Failed to save state to localStorage:', error);
+            }
+        }
+
+        // Debounced save to avoid excessive localStorage writes
+        function debouncedSaveState() {
+            if (saveStateDebounceTimer) {
+                clearTimeout(saveStateDebounceTimer);
+            }
+            saveStateDebounceTimer = setTimeout(saveStateToLocalStorage, saveStateDebounceDelay);
+        }
+
+        // Load state from localStorage
+        function loadStateFromLocalStorage() {
+            try {
+                const savedState = localStorage.getItem(localStorageKey);
+                if (!savedState) return null;
+
+                return JSON.parse(savedState);
+            } catch (error) {
+                console.error('Failed to load state from localStorage:', error);
+                return null;
+            }
+        }
+
         document.addEventListener('keydown', (event) => {
             const key = event.key.toLowerCase();
 
@@ -1185,40 +1443,31 @@
             }
 
             // Arrow keys - control focal point if in tracking mode, otherwise control eye position
-            if (event.key === 'ArrowUp') {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
                 event.preventDefault();
+
                 if (isTrackingMode) {
-                    moveFocalPointManually(0, -focalPointManualMoveStep);
+                    // Spider mode tracking - use fixed step movement
+                    if (event.key === 'ArrowUp') {
+                        moveFocalPointManually(0, -focalPointManualMoveStep);
+                    } else if (event.key === 'ArrowDown') {
+                        moveFocalPointManually(0, focalPointManualMoveStep);
+                    } else if (event.key === 'ArrowLeft') {
+                        moveFocalPointManually(-focalPointManualMoveStep, 0);
+                    } else if (event.key === 'ArrowRight') {
+                        moveFocalPointManually(focalPointManualMoveStep, 0);
+                    }
                 } else if (activeSetIndex !== -1) {
-                    eyeSets[activeSetIndex].posY -= posStep;
-                    updateEyeSetTransform(activeSetIndex);
-                }
-                return;
-            } else if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                if (isTrackingMode) {
-                    moveFocalPointManually(0, focalPointManualMoveStep);
-                } else if (activeSetIndex !== -1) {
-                    eyeSets[activeSetIndex].posY += posStep;
-                    updateEyeSetTransform(activeSetIndex);
-                }
-                return;
-            } else if (event.key === 'ArrowLeft') {
-                event.preventDefault();
-                if (isTrackingMode) {
-                    moveFocalPointManually(-focalPointManualMoveStep, 0);
-                } else if (activeSetIndex !== -1) {
-                    eyeSets[activeSetIndex].posX -= posStep;
-                    updateEyeSetTransform(activeSetIndex);
-                }
-                return;
-            } else if (event.key === 'ArrowRight') {
-                event.preventDefault();
-                if (isTrackingMode) {
-                    moveFocalPointManually(focalPointManualMoveStep, 0);
-                } else if (activeSetIndex !== -1) {
-                    eyeSets[activeSetIndex].posX += posStep;
-                    updateEyeSetTransform(activeSetIndex);
+                    // Normal mode - use hold-duration quadratic acceleration
+                    // Record key press timestamp (only on first press, ignore repeat events)
+                    if (!heldArrowKeys[event.key]) {
+                        heldArrowKeys[event.key] = Date.now();
+
+                        // Start animation loop if not already running
+                        if (!arrowKeyAnimationId) {
+                            arrowKeyAnimationId = requestAnimationFrame(updateArrowKeyMovement);
+                        }
+                    }
                 }
                 return;
             }
@@ -1244,22 +1493,81 @@
                 event.preventDefault();
                 eyeSet.scale = Math.min(eyeSet.scale + scaleStep, maxScale);
                 updateEyeSetTransform(activeSetIndex);
+                debouncedSaveState();
             } else if (key === 'w') {
                 event.preventDefault();
                 eyeSet.scale = Math.max(eyeSet.scale - scaleStep, minScale);
                 updateEyeSetTransform(activeSetIndex);
+                debouncedSaveState();
             }
             // E/R for gap (wider/closer)
             else if (key === 'e') {
                 event.preventDefault();
                 eyeSet.gap = Math.min(eyeSet.gap + gapStep, maxGap);
                 updateEyeSetTransform(activeSetIndex);
+                debouncedSaveState();
             } else if (key === 'r') {
                 event.preventDefault();
                 eyeSet.gap = Math.max(eyeSet.gap - gapStep, minGap);
                 updateEyeSetTransform(activeSetIndex);
+                debouncedSaveState();
             }
         });
+
+        // Keyup listener to clear arrow key hold state
+        document.addEventListener('keyup', (event) => {
+            // Clear held arrow key when released
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                delete heldArrowKeys[event.key];
+
+                // Stop animation loop if no keys are held
+                if (Object.keys(heldArrowKeys).length === 0 && arrowKeyAnimationId) {
+                    cancelAnimationFrame(arrowKeyAnimationId);
+                    arrowKeyAnimationId = null;
+                }
+            }
+        });
+
+        // Animation loop for continuous arrow key movement with quadratic acceleration
+        function updateArrowKeyMovement() {
+            // Only proceed if there are held keys and an active eye set
+            if (Object.keys(heldArrowKeys).length === 0 || activeSetIndex === -1) {
+                arrowKeyAnimationId = null;
+                return;
+            }
+
+            const now = Date.now();
+            const eyeSet = eyeSets[activeSetIndex];
+
+            // Process each held arrow key
+            for (const key in heldArrowKeys) {
+                const pressDuration = (now - heldArrowKeys[key]) / 1000; // Convert to seconds
+
+                // Calculate speed using quadratic acceleration: speed = baseSpeed + acceleration * t^2
+                const speed = Math.min(
+                    arrowKeyBaseSpeed + arrowKeyAcceleration * pressDuration * pressDuration,
+                    arrowKeyMaxSpeed
+                );
+
+                // Update position based on key direction
+                if (key === 'ArrowUp') {
+                    eyeSet.posY -= speed;
+                } else if (key === 'ArrowDown') {
+                    eyeSet.posY += speed;
+                } else if (key === 'ArrowLeft') {
+                    eyeSet.posX -= speed;
+                } else if (key === 'ArrowRight') {
+                    eyeSet.posX += speed;
+                }
+            }
+
+            // Apply the position update
+            updateEyeSetTransform(activeSetIndex);
+            debouncedSaveState();
+
+            // Continue animation loop
+            arrowKeyAnimationId = requestAnimationFrame(updateArrowKeyMovement);
+        }
 
         // Toggle eye set visibility and active state
         function toggleEyeSet(setIndex) {
@@ -1272,6 +1580,7 @@
                 eyeSet.visible = false;
                 eyeSet.element.classList.add('hidden');
                 stopEyeSetAnimations(setIndex);
+                debouncedSaveState();
                 return;
             }
 
@@ -1295,6 +1604,7 @@
             }
 
             activeSetIndex = setIndex;
+            debouncedSaveState();
         }
 
         // Gamepad event listeners
@@ -1320,6 +1630,9 @@
             // Console message
             console.log('Press Space bar for help');
 
+            // Initialize drip pool
+            initializeDripPool();
+
             // Show help message on page load
             const helpMessage = document.getElementById('help-message');
             setTimeout(() => {
@@ -1331,8 +1644,41 @@
                 helpMessage.classList.remove('visible');
             }, 5100);
 
-            // Start in spider mode by default
-            toggleSpiderMode();
+            // Try to restore saved state from localStorage
+            const savedState = loadStateFromLocalStorage();
+            if (savedState && savedState.eyeSets) {
+                // Restore eye sets from saved state
+                for (let i = 0; i < maxSets; i++) {
+                    const savedSet = savedState.eyeSets[i];
+                    if (savedSet) {
+                        // Create or get the eye set
+                        const eyeSet = getOrCreateEyeSet(i);
+
+                        // Restore saved properties
+                        eyeSet.scale = savedSet.scale;
+                        eyeSet.gap = savedSet.gap;
+                        eyeSet.posX = savedSet.posX;
+                        eyeSet.posY = savedSet.posY;
+                        eyeSet.visible = savedSet.visible;
+                        eyeSet.everShown = savedSet.everShown;
+
+                        // If this set was visible, show it
+                        if (savedSet.visible) {
+                            eyeSet.element.classList.remove('hidden');
+                            updateEyeSetTransform(i);
+                            startEyeSetAnimations(i);
+                        }
+                    }
+                }
+
+                // Restore active set index
+                activeSetIndex = savedState.activeSetIndex;
+
+                console.log('Restored eye sets from localStorage');
+            } else {
+                // No saved state - start in spider mode by default
+                toggleSpiderMode();
+            }
         });
     </script>
 </body>
