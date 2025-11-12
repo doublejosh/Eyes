@@ -1,0 +1,38 @@
+{
+  "scriptId": "wave",
+  "name": "Wave Pattern",
+  "description": "Sequential activation creating a wave effect",
+  "interactions": [
+    { "targetSet": 1, "startTime": 0.5 },
+    { "targetSet": 2, "startTime": 1.0 },
+    { "targetSet": 3, "startTime": 1.5 }
+  ],
+  "duration": 3.5,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "widen",
+      "params": { "intensity": 0.4, "duration": 0.3 }
+    },
+    {
+      "time": 0.5,
+      "action": "widen",
+      "params": { "intensity": 0.4, "duration": 0.3 }
+    },
+    {
+      "time": 1.0,
+      "action": "widen",
+      "params": { "intensity": 0.4, "duration": 0.3 }
+    },
+    {
+      "time": 1.5,
+      "action": "widen",
+      "params": { "intensity": 0.4, "duration": 0.3 }
+    },
+    {
+      "time": 2.5,
+      "action": "setScale",
+      "params": { "scale": 1.0, "duration": 0.5 }
+    }
+  ]
+}

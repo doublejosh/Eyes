@@ -1,0 +1,24 @@
+{
+  "scriptId": "sync_blink",
+  "name": "Synchronized Multi-Eye Blink",
+  "description": "Multiple eye sets blink in sequence",
+  "interactions": [
+    { "targetSet": 1, "startTime": 0.3 },
+    { "targetSet": 2, "startTime": 0.6 }
+  ],
+  "duration": 1.2,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "blink"
+    },
+    {
+      "time": 0.3,
+      "action": "blink"
+    },
+    {
+      "time": 0.6,
+      "action": "blink"
+    }
+  ]
+}

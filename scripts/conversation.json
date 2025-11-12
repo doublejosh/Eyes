@@ -1,0 +1,54 @@
+{
+  "scriptId": "conversation",
+  "name": "Eyes Talking",
+  "description": "Two eye sets look at each other and converse",
+  "interactions": [
+    { "targetSet": 1, "startTime": 0.0, "scriptId": "conversation_partner" }
+  ],
+  "duration": 8.0,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "moveIris",
+      "params": { "x": 35, "y": 0, "duration": 0.4 }
+    },
+    {
+      "time": 1.0,
+      "action": "moveIris",
+      "params": { "x": 30, "y": -3, "duration": 0.3 }
+    },
+    {
+      "time": 1.8,
+      "action": "blink"
+    },
+    {
+      "time": 2.5,
+      "action": "moveIris",
+      "params": { "x": 35, "y": 2, "duration": 0.4 }
+    },
+    {
+      "time": 3.5,
+      "action": "dart",
+      "params": { "direction": "up", "duration": 0.15 }
+    },
+    {
+      "time": 4.0,
+      "action": "moveIris",
+      "params": { "x": 32, "y": 0, "duration": 0.3 }
+    },
+    {
+      "time": 5.0,
+      "action": "blink"
+    },
+    {
+      "time": 6.0,
+      "action": "moveIris",
+      "params": { "x": 35, "y": -2, "duration": 0.3 }
+    },
+    {
+      "time": 7.0,
+      "action": "moveIris",
+      "params": { "x": 0, "y": 0, "duration": 0.5 }
+    }
+  ]
+}

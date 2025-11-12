@@ -308,7 +308,13 @@
         <p><kbd>X</kbd> Eye tracking (beast mode)</p>
         <p><kbd>Z</kbd> Custom eyes</p>
         <p><kbd>T</kbd> Toggle tears (drips)</p>
+        <p><kbd>D</kbd> Toggle director</p>
+        <p><kbd>M</kbd> Director mode (passive/active/chaotic)</p>
         <p><kbd>1-0</kbd> Toggle eye sets (10)</p>
+        <p><kbd>B</kbd> Cycle behavior mode</p>
+        <p><kbd>S</kbd> Cycle scripts</p>
+        <p><kbd>P</kbd> Play default script</p>
+        <p><kbd>Esc</kbd> Stop script</p>
         <p><kbd>Q/W</kbd> Scale up/down</p>
         <p><kbd>E/R</kbd> Gap wider/closer</p>
         <p><kbd>↑↓←→</kbd> Move position</p>
@@ -526,6 +532,43 @@
         let gamepadAnimationId = null;
         let connectedGamepad = null;
 
+        // ============================================================
+        // SCRIPTED BEHAVIOR SYSTEM - Enums and Classes
+        // ============================================================
+
+        // Behavior enumeration
+        const BehaviorType = {
+            AUTONOMOUS: 'autonomous',      // Current random movement (default)
+            TRACKING: 'tracking',          // Follow focal point
+            SCRIPTED: 'scripted'          // Execute loaded script
+        };
+
+        // Script instance class
+        class ScriptInstance {
+            constructor(scriptObject, setIndex, startTime) {
+                this.scriptObject = scriptObject;
+                this.setIndex = setIndex;
+                this.startTime = startTime;
+                this.scheduledActions = [];   // Array of timeout IDs
+                this.interactionInstances = []; // Related script instances
+                this.isRunning = false;
+                this.isInteraction = false;    // Flag to prevent recursive interactions
+                this.onComplete = null;        // Callback when script finishes
+                this.originalState = null;     // Stores original position/scale/gap to restore
+            }
+        }
+
+        // Script execution state
+        const scriptExecutionState = {
+            scriptInstances: new Map(),    // Map<setIndex, ScriptInstance>
+            loadedScripts: new Map(),      // Map<scriptId, ScriptObject>
+            defaultScripts: {},            // { setIndex: scriptId }
+            scriptDirectory: 'scripts/'    // Base path for JSON files
+        };
+
+        // Action registry (will be populated in Phase 2)
+        const actionRegistry = {};
+
         // Default values for new eye sets
         const defaultState = {
             scale: 1,
@@ -535,7 +578,10 @@
             blinkTimeoutId: null,
             moveTimeoutId: null,
             dripTimeoutId: null,
-            everShown: false
+            everShown: false,
+            behavior: BehaviorType.AUTONOMOUS,
+            currentScript: null,
+            lastBehaviorChange: 0
         };
 
         // Constants
@@ -672,6 +718,1008 @@
             const randomX = (Math.random() - 0.5) * 800; // -400 to 400
             const randomY = (Math.random() - 0.5) * 400; // -200 to 200
             return { posX: randomX, posY: randomY };
+        }
+
+        // ============================================================
+        // SCRIPT LOADING SYSTEM
+        // ============================================================
+
+        // Load script from JSON file
+        async function loadScript(scriptId) {
+            if (scriptExecutionState.loadedScripts.has(scriptId)) {
+                return scriptExecutionState.loadedScripts.get(scriptId);
+            }
+
+            try {
+                const response = await fetch(`${scriptExecutionState.scriptDirectory}${scriptId}.json`);
+                if (!response.ok) throw new Error(`Script not found: ${scriptId}`);
+
+                const scriptObject = await response.json();
+
+                // Validate script structure
+                if (!validateScript(scriptObject)) {
+                    throw new Error(`Invalid script format: ${scriptId}`);
+                }
+
+                // Sort timeline by time
+                scriptObject.timeline.sort((a, b) => a.time - b.time);
+
+                // Calculate duration if not provided
+                if (!scriptObject.duration) {
+                    const lastAction = scriptObject.timeline[scriptObject.timeline.length - 1];
+                    scriptObject.duration = lastAction.time + (lastAction.params?.duration || 0);
+                }
+
+                scriptExecutionState.loadedScripts.set(scriptId, scriptObject);
+                console.log(`Loaded script: ${scriptObject.name} (${scriptId})`);
+
+                return scriptObject;
+            } catch (error) {
+                console.error(`Failed to load script ${scriptId}:`, error);
+                return null;
+            }
+        }
+
+        // Validate script structure
+        function validateScript(script) {
+            if (!script.scriptId || !script.name || !Array.isArray(script.timeline)) {
+                return false;
+            }
+
+            for (const action of script.timeline) {
+                if (typeof action.time !== 'number' || !action.action) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Preload all scripts in directory
+        async function preloadAllScripts() {
+            const scriptList = [
+                'surprise', 'cross_eyes', 'roll_eyes', 'sleepy',
+                'angry', 'curious', 'scared', 'confused', 'shifty',
+                'sync_blink', 'wave', 'conversation', 'conversation_partner', 'dance'
+            ];
+
+            const promises = scriptList.map(id => loadScript(id));
+            await Promise.allSettled(promises);
+        }
+
+        // ============================================================
+        // SCRIPT EXECUTION ENGINE
+        // ============================================================
+
+        // Start executing a script on an eye set
+        async function executeScript(setIndex, scriptId, isInteraction = false) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet || !eyeSet.visible) return null;
+
+            // Load script if not already loaded
+            const scriptObject = await loadScript(scriptId);
+            if (!scriptObject) return null;
+
+            // Stop current behavior (animations, tracking, or existing script)
+            if (eyeSet.behavior === BehaviorType.SCRIPTED && eyeSet.currentScript) {
+                stopScript(setIndex);
+            } else if (eyeSet.behavior === BehaviorType.TRACKING) {
+                stopEyeSetTracking(setIndex);
+            } else {
+                stopEyeSetAnimations(setIndex);
+            }
+
+            // Set behavior to scripted
+            eyeSet.behavior = BehaviorType.SCRIPTED;
+            eyeSet.lastBehaviorChange = Date.now();
+
+            // Create script instance
+            const instance = new ScriptInstance(scriptObject, setIndex, Date.now());
+            instance.isRunning = true;
+            instance.isInteraction = isInteraction;
+
+            // Store original state to restore after script completes
+            instance.originalState = {
+                posX: eyeSet.posX,
+                posY: eyeSet.posY,
+                scale: eyeSet.scale,
+                gap: eyeSet.gap
+            };
+
+            eyeSet.currentScript = instance;
+            scriptExecutionState.scriptInstances.set(setIndex, instance);
+
+            // Schedule all timeline actions
+            for (const actionDef of scriptObject.timeline) {
+                const timeoutId = setTimeout(() => {
+                    executeAction(setIndex, actionDef.action, actionDef.params || {});
+                }, actionDef.time * 1000);
+
+                instance.scheduledActions.push(timeoutId);
+            }
+
+            // Handle interactions ONLY if this is not already an interaction
+            // This prevents infinite interaction loops
+            if (scriptObject.interactions && !isInteraction) {
+                for (const interaction of scriptObject.interactions) {
+                    const interactionTimeoutId = setTimeout(async () => {
+                        const targetScript = interaction.scriptId || scriptId;
+                        const interactionInstance = await executeScript(interaction.targetSet, targetScript, true);
+                        if (interactionInstance) {
+                            instance.interactionInstances.push(interactionInstance);
+                        }
+                    }, interaction.startTime * 1000);
+
+                    instance.scheduledActions.push(interactionTimeoutId);
+                }
+            }
+
+            // Schedule script completion
+            const completionTimeoutId = setTimeout(() => {
+                completeScript(setIndex);
+            }, scriptObject.duration * 1000);
+
+            instance.scheduledActions.push(completionTimeoutId);
+
+            console.log(`Started script "${scriptObject.name}" on eye set ${setIndex}${isInteraction ? ' (interaction)' : ''}`);
+            return instance;
+        }
+
+        // Complete script execution
+        function completeScript(setIndex) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet || !eyeSet.currentScript) return;
+
+            const instance = eyeSet.currentScript;
+
+            // Clear all scheduled actions
+            for (const timeoutId of instance.scheduledActions) {
+                clearTimeout(timeoutId);
+            }
+
+            instance.isRunning = false;
+            instance.scheduledActions = [];
+
+            // Execute completion callback if present
+            if (instance.onComplete) {
+                instance.onComplete();
+            }
+
+            // Clean up
+            eyeSet.currentScript = null;
+            scriptExecutionState.scriptInstances.delete(setIndex);
+
+            console.log(`Completed script "${instance.scriptObject.name}" on eye set ${setIndex}`);
+
+            // Restore original position, scale, and gap if they were stored
+            if (instance.originalState) {
+                eyeSet.posX = instance.originalState.posX;
+                eyeSet.posY = instance.originalState.posY;
+                eyeSet.scale = instance.originalState.scale;
+                eyeSet.gap = instance.originalState.gap;
+                updateEyeSetTransform(setIndex);
+            }
+
+            // IMPORTANT: Stop all existing animations/timers first to prevent multiple behaviors
+            stopEyeSetAnimations(setIndex);
+
+            // Return to autonomous behavior
+            eyeSet.behavior = BehaviorType.AUTONOMOUS;
+            eyeSet.lastBehaviorChange = Date.now();
+
+            // Start fresh autonomous animations
+            startEyeSetAnimations(setIndex);
+        }
+
+        // Stop script execution (manual interrupt)
+        function stopScript(setIndex) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet || !eyeSet.currentScript) return;
+
+            completeScript(setIndex);
+        }
+
+        // Execute a single action
+        function executeAction(setIndex, actionName, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet || !eyeSet.visible) return;
+
+            // Resolve action function
+            const actionFunction = actionRegistry[actionName];
+            if (!actionFunction) {
+                console.warn(`Unknown action: ${actionName}`);
+                return;
+            }
+
+            // Call action with eye set and parameters
+            actionFunction(setIndex, params);
+        }
+
+        // ============================================================
+        // PHASE 2: CORE ACTION FUNCTIONS
+        // ============================================================
+
+        // Blink action
+        function actionBlink(setIndex, params) {
+            blinkEyeSet(setIndex);
+        }
+
+        // Move iris to specific position
+        function actionMoveIris(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { x = 0, y = 0, duration = 1.5 } = params;
+            const irises = eyeSet.element.querySelectorAll('.iris');
+
+            // Update CSS transition duration
+            irises.forEach(iris => {
+                iris.style.transition = `transform ${duration}s ease-out`;
+                iris.style.transform = `translate(${x}px, ${y}px)`;
+            });
+        }
+
+        // Set scale with animation
+        function actionSetScale(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { scale, duration = 0.3 } = params;
+
+            // Temporarily override transition for smooth animation
+            const originalTransition = eyeSet.element.style.transition;
+            eyeSet.element.style.transition = `transform ${duration}s ease-out, gap ${duration}s ease-out`;
+
+            eyeSet.scale = Math.max(minScale, Math.min(scale, maxScale));
+            updateEyeSetTransform(setIndex);
+
+            // Restore original transition after animation
+            setTimeout(() => {
+                eyeSet.element.style.transition = originalTransition;
+            }, duration * 1000);
+        }
+
+        // Set gap with animation
+        function actionSetGap(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { gap, duration = 0.3 } = params;
+
+            const originalTransition = eyeSet.element.style.transition;
+            eyeSet.element.style.transition = `transform ${duration}s ease-out, gap ${duration}s ease-out`;
+
+            eyeSet.gap = Math.max(minGap, Math.min(gap, maxGap));
+            updateEyeSetTransform(setIndex);
+
+            setTimeout(() => {
+                eyeSet.element.style.transition = originalTransition;
+            }, duration * 1000);
+        }
+
+        // Set position with animation
+        function actionSetPosition(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { x, y, duration = 0.5 } = params;
+
+            const originalTransition = eyeSet.element.style.transition;
+            eyeSet.element.style.transition = `transform ${duration}s ease-out, gap ${duration}s ease-out`;
+
+            if (x !== undefined) eyeSet.posX = x;
+            if (y !== undefined) eyeSet.posY = y;
+            updateEyeSetTransform(setIndex);
+
+            setTimeout(() => {
+                eyeSet.element.style.transition = originalTransition;
+            }, duration * 1000);
+        }
+
+        // Play sound file
+        function actionPlaySound(setIndex, params) {
+            const { soundFile, volume = 1.0 } = params;
+
+            try {
+                const audio = new Audio(soundFile);
+                audio.volume = Math.max(0, Math.min(volume, 1));
+                audio.play().catch(err => console.warn('Audio play failed:', err));
+            } catch (error) {
+                console.error('Failed to play sound:', error);
+            }
+        }
+
+        // Populate action registry with core actions
+        actionRegistry['blink'] = actionBlink;
+        actionRegistry['moveIris'] = actionMoveIris;
+        actionRegistry['setScale'] = actionSetScale;
+        actionRegistry['setGap'] = actionSetGap;
+        actionRegistry['setPosition'] = actionSetPosition;
+        actionRegistry['playSound'] = actionPlaySound;
+
+        // ============================================================
+        // PHASE 3: ADVANCED ACTION FUNCTIONS
+        // ============================================================
+
+        // Cross eyes toward center
+        function actionCrossEyes(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { intensity = 0.5, duration = 0.8 } = params;
+            const leftEyeIrises = eyeSet.element.querySelectorAll('svg:first-child .iris');
+            const rightEyeIrises = eyeSet.element.querySelectorAll('svg:last-child .iris');
+
+            const crossAmount = 40 * intensity; // Max 40px inward movement
+
+            leftEyeIrises.forEach(iris => {
+                iris.style.transition = `transform ${duration}s ease-out`;
+                iris.style.transform = `translate(${crossAmount}px, 0px)`;
+            });
+
+            rightEyeIrises.forEach(iris => {
+                iris.style.transition = `transform ${duration}s ease-out`;
+                iris.style.transform = `translate(${-crossAmount}px, 0px)`;
+            });
+        }
+
+        // Uncross eyes (return to center)
+        function actionUncrossEyes(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { duration = 0.5 } = params;
+            const irises = eyeSet.element.querySelectorAll('.iris');
+
+            irises.forEach(iris => {
+                iris.style.transition = `transform ${duration}s ease-out`;
+                iris.style.transform = 'translate(0px, 0px)';
+            });
+        }
+
+        // Roll eyes in circular motion
+        function actionRollEyes(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { direction = 'up', duration = 1.5 } = params;
+            const irises = eyeSet.element.querySelectorAll('.iris');
+
+            // Define roll path (circular motion)
+            const radius = 45;
+            const steps = 8;
+            const stepDuration = duration / steps;
+
+            // Starting angle based on direction
+            let startAngle = direction === 'up' ? -Math.PI/2 : Math.PI/2;
+            if (direction === 'left') startAngle = Math.PI;
+            if (direction === 'right') startAngle = 0;
+
+            // Animate through circular path
+            for (let i = 0; i <= steps; i++) {
+                setTimeout(() => {
+                    const angle = startAngle + (i / steps) * 2 * Math.PI;
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius * 0.3; // Elliptical for eye shape
+
+                    irises.forEach(iris => {
+                        iris.style.transition = `transform ${stepDuration}s linear`;
+                        iris.style.transform = `translate(${x}px, ${y}px)`;
+                    });
+                }, i * stepDuration * 1000);
+            }
+        }
+
+        // Widen eyes (surprise effect)
+        function actionWiden(setIndex, params) {
+            const { intensity = 0.5, duration = 0.3 } = params;
+            const scaleIncrease = 1 + (intensity * 0.5); // Up to 1.5x scale
+            actionSetScale(setIndex, { scale: scaleIncrease, duration });
+        }
+
+        // Squint eyes
+        function actionSquint(setIndex, params) {
+            const { intensity = 0.5, duration = 0.3 } = params;
+            const scaleDecrease = 1 - (intensity * 0.3); // Down to 0.7x scale
+            actionSetScale(setIndex, { scale: scaleDecrease, duration });
+        }
+
+        // Look at specific screen coordinates
+        function actionLookAt(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { screenX, screenY, duration = 0.8 } = params;
+
+            // Get eye position on screen
+            const rect = eyeSet.element.getBoundingClientRect();
+            const eyeCenterX = rect.left + rect.width / 2;
+            const eyeCenterY = rect.top + rect.height / 2;
+
+            // Calculate iris offset
+            const dx = screenX - eyeCenterX;
+            const dy = screenY - eyeCenterY;
+            const angle = Math.atan2(dy, dx);
+            const distance = Math.min(50, Math.sqrt(dx * dx + dy * dy) / 20);
+
+            const offsetX = Math.cos(angle) * distance;
+            const offsetY = Math.sin(angle) * distance * 0.2; // Less vertical movement
+
+            actionMoveIris(setIndex, { x: offsetX, y: offsetY, duration });
+        }
+
+        // Quick darting movement
+        function actionDart(setIndex, params) {
+            const { direction = 'random', duration = 0.15 } = params;
+
+            let x = 0, y = 0;
+            if (direction === 'random') {
+                x = (Math.random() - 0.5) * 100;
+                y = (Math.random() - 0.5) * 20;
+            } else if (direction === 'left') {
+                x = -50;
+            } else if (direction === 'right') {
+                x = 50;
+            } else if (direction === 'up') {
+                y = -10;
+            } else if (direction === 'down') {
+                y = 10;
+            }
+
+            actionMoveIris(setIndex, { x, y, duration });
+        }
+
+        // Shake eyes rapidly
+        function actionShake(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { intensity = 0.5, duration = 0.5, frequency = 10 } = params;
+            const shakeAmount = 20 * intensity;
+            const interval = duration / frequency;
+
+            for (let i = 0; i < frequency; i++) {
+                setTimeout(() => {
+                    const x = (Math.random() - 0.5) * 2 * shakeAmount;
+                    const y = (Math.random() - 0.5) * 2 * shakeAmount * 0.3;
+                    actionMoveIris(setIndex, { x, y, duration: interval });
+                }, i * interval * 1000);
+            }
+        }
+
+        // Start dripping
+        function actionStartDripping(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet || !eyeSet.visible) return;
+
+            if (!eyeSet.dripTimeoutId) {
+                const initialDripDelay = Math.random() * 1000 + 500;
+                eyeSet.dripTimeoutId = setTimeout(() => dripEyeSet(setIndex), initialDripDelay);
+            }
+        }
+
+        // Stop dripping
+        function actionStopDripping(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            if (eyeSet.dripTimeoutId) {
+                clearTimeout(eyeSet.dripTimeoutId);
+                eyeSet.dripTimeoutId = null;
+            }
+        }
+
+        // Set iris color
+        function actionSetColor(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { color } = params;
+
+            // Pause color animations
+            const irisMainElements = eyeSet.element.querySelectorAll('.iris-main');
+            irisMainElements.forEach(elem => {
+                elem.style.animation = 'none';
+                elem.style.fill = color;
+            });
+        }
+
+        // Fade color over time
+        function actionFadeColor(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { fromColor, toColor, duration = 1.0 } = params;
+
+            // Use CSS transition for color fade
+            const irisMainElements = eyeSet.element.querySelectorAll('.iris-main');
+            irisMainElements.forEach(elem => {
+                elem.style.animation = 'none';
+                elem.style.fill = fromColor;
+                elem.style.transition = `fill ${duration}s ease-in-out`;
+
+                // Trigger fade
+                setTimeout(() => {
+                    elem.style.fill = toColor;
+                }, 10);
+            });
+        }
+
+        // Populate action registry with advanced actions
+        actionRegistry['crossEyes'] = actionCrossEyes;
+        actionRegistry['uncrossEyes'] = actionUncrossEyes;
+        actionRegistry['rollEyes'] = actionRollEyes;
+        actionRegistry['widen'] = actionWiden;
+        actionRegistry['squint'] = actionSquint;
+        actionRegistry['lookAt'] = actionLookAt;
+        actionRegistry['dart'] = actionDart;
+        actionRegistry['shake'] = actionShake;
+        actionRegistry['startDripping'] = actionStartDripping;
+        actionRegistry['stopDripping'] = actionStopDripping;
+        actionRegistry['setColor'] = actionSetColor;
+        actionRegistry['fadeColor'] = actionFadeColor;
+
+        // ============================================================
+        // PHASE 5: BEHAVIOR MANAGEMENT
+        // ============================================================
+
+        // Per-eye-set tracking state (shared across all tracking eye sets)
+        const eyeSetTrackingState = {
+            focalPoint: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+            focalPointTarget: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+            animationId: null,
+            moveTimeoutId: null
+        };
+
+        // Set behavior mode for an eye set
+        function setEyeBehavior(setIndex, behavior) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            // Always stop all animations first, regardless of current behavior
+            // This ensures clean transitions and prevents multiple timers
+            stopEyeSetAnimations(setIndex);
+
+            // Then stop specific behaviors
+            if (eyeSet.behavior === BehaviorType.SCRIPTED && eyeSet.currentScript) {
+                stopScript(setIndex);
+            } else if (eyeSet.behavior === BehaviorType.TRACKING) {
+                stopEyeSetTracking(setIndex);
+            }
+
+            // Start new behavior
+            eyeSet.behavior = behavior;
+            eyeSet.lastBehaviorChange = Date.now();
+
+            switch (behavior) {
+                case BehaviorType.AUTONOMOUS:
+                    startEyeSetAnimations(setIndex);
+                    break;
+
+                case BehaviorType.TRACKING:
+                    startEyeSetTracking(setIndex);
+                    break;
+
+                case BehaviorType.SCRIPTED:
+                    // Scripts started via executeScript()
+                    break;
+            }
+
+            debouncedSaveState();
+        }
+
+        // Cycle through behaviors (for keyboard control)
+        function cycleBehavior(setIndex) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const behaviors = [
+                BehaviorType.AUTONOMOUS,
+                BehaviorType.TRACKING,
+                BehaviorType.SCRIPTED
+            ];
+
+            const currentIndex = behaviors.indexOf(eyeSet.behavior);
+            const nextIndex = (currentIndex + 1) % behaviors.length;
+            const nextBehavior = behaviors[nextIndex];
+
+            if (nextBehavior === BehaviorType.SCRIPTED) {
+                // Load default script or cycle to next behavior
+                const defaultScript = scriptExecutionState.defaultScripts[setIndex];
+                if (defaultScript) {
+                    executeScript(setIndex, defaultScript);
+                } else {
+                    // No default script, cycle to autonomous instead
+                    setEyeBehavior(setIndex, BehaviorType.AUTONOMOUS);
+                }
+            } else {
+                setEyeBehavior(setIndex, nextBehavior);
+            }
+        }
+
+        // Cycle through available scripts
+        function cycleScript(setIndex) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const scriptIds = Array.from(scriptExecutionState.loadedScripts.keys());
+            if (scriptIds.length === 0) return;
+
+            // Find current script index
+            let currentIndex = -1;
+            if (eyeSet.currentScript) {
+                currentIndex = scriptIds.indexOf(eyeSet.currentScript.scriptObject.scriptId);
+            }
+
+            // Get next script
+            const nextIndex = (currentIndex + 1) % scriptIds.length;
+            const nextScriptId = scriptIds[nextIndex];
+
+            // Execute next script
+            executeScript(setIndex, nextScriptId);
+        }
+
+        // Start tracking mode for an individual eye set
+        function startEyeSetTracking(setIndex) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            eyeSet.behavior = BehaviorType.TRACKING;
+            eyeSet.lastBehaviorChange = Date.now();
+
+            // Initialize focal point if not already tracking
+            if (!eyeSetTrackingState.animationId) {
+                eyeSetTrackingState.focalPoint = {
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2
+                };
+                eyeSetTrackingState.focalPointTarget = {
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2
+                };
+
+                // Start movement
+                moveEyeSetFocalPoint();
+
+                // Start tracking loop
+                eyeSetTrackingState.animationId = requestAnimationFrame(updateEyeSetTracking);
+            }
+        }
+
+        // Stop tracking mode for an individual eye set
+        function stopEyeSetTracking(setIndex) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            // Check if any other sets are still tracking
+            const hasOtherTracking = eyeSets.some((set, idx) =>
+                set && idx !== setIndex && set.behavior === BehaviorType.TRACKING
+            );
+
+            // If no other sets tracking, stop global tracking
+            if (!hasOtherTracking && eyeSetTrackingState.animationId) {
+                cancelAnimationFrame(eyeSetTrackingState.animationId);
+                eyeSetTrackingState.animationId = null;
+
+                if (eyeSetTrackingState.moveTimeoutId) {
+                    clearTimeout(eyeSetTrackingState.moveTimeoutId);
+                    eyeSetTrackingState.moveTimeoutId = null;
+                }
+            }
+        }
+
+        // Update eye set tracking animation
+        function updateEyeSetTracking() {
+            // Update focal point position
+            eyeSetTrackingState.focalPoint.x += (eyeSetTrackingState.focalPointTarget.x - eyeSetTrackingState.focalPoint.x) * focalPointSmoothingFactor;
+            eyeSetTrackingState.focalPoint.y += (eyeSetTrackingState.focalPointTarget.y - eyeSetTrackingState.focalPoint.y) * focalPointSmoothingFactor;
+
+            // Update all eye sets in tracking mode
+            eyeSets.forEach((eyeSet, setIndex) => {
+                if (!eyeSet || !eyeSet.visible || eyeSet.behavior !== BehaviorType.TRACKING) return;
+
+                // Get eye position
+                const rect = eyeSet.element.getBoundingClientRect();
+                const eyeCenter = {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                };
+
+                // Calculate vector to focal point
+                const dx = eyeSetTrackingState.focalPoint.x - eyeCenter.x;
+                const dy = eyeSetTrackingState.focalPoint.y - eyeCenter.y;
+
+                // Calculate angle and distance
+                const angle = Math.atan2(dy, dx);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const distance = Math.min(50, dist / 15);
+
+                // Calculate iris offset
+                const offsetX = Math.cos(angle) * distance;
+                const offsetY = Math.sin(angle) * distance * 0.2;
+
+                // Apply to iris elements
+                const irises = eyeSet.element.querySelectorAll('.iris');
+                irises.forEach(iris => {
+                    iris.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+                });
+            });
+
+            // Continue loop
+            eyeSetTrackingState.animationId = requestAnimationFrame(updateEyeSetTracking);
+        }
+
+        // Move focal point to random position
+        function moveEyeSetFocalPoint() {
+            // Generate random target position
+            eyeSetTrackingState.focalPointTarget = {
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight
+            };
+
+            // Schedule next move
+            const nextMoveDelay = Math.random() * (focalPointMoveDelayMax - focalPointMoveDelayMin) + focalPointMoveDelayMin;
+            eyeSetTrackingState.moveTimeoutId = setTimeout(moveEyeSetFocalPoint, nextMoveDelay);
+        }
+
+        // ============================================================
+        // PHASE 10: DIRECTOR SYSTEM
+        // ============================================================
+
+        // Director state
+        const directorState = {
+            enabled: false,
+            mode: 'active',
+            lastScriptTime: 0,
+            scriptCooldown: 5000,
+            evaluationInterval: 8000,
+            evaluationTimeoutId: null,
+            triggerProbabilities: {
+                autonomous: 0.5,
+                tracking: 0.2,
+                scripted: 0.3
+            },
+            interactionChance: 0.3
+        };
+
+        // Director configuration
+        const directorConfig = {
+            defaultMode: 'active',
+            modes: {
+                passive: {
+                    evaluationInterval: 12000,
+                    scriptCooldown: 10000,
+                    triggerProbabilities: { autonomous: 0.8, tracking: 0.1, scripted: 0.1 }
+                },
+                active: {
+                    evaluationInterval: 8000,
+                    scriptCooldown: 5000,
+                    triggerProbabilities: { autonomous: 0.5, tracking: 0.2, scripted: 0.3 }
+                },
+                chaotic: {
+                    evaluationInterval: 4000,
+                    scriptCooldown: 2000,
+                    triggerProbabilities: { autonomous: 0.2, tracking: 0.3, scripted: 0.5 }
+                }
+            },
+            scriptWeights: {
+                surprise: 1.0,
+                cross_eyes: 0.8,
+                roll_eyes: 0.9,
+                sleepy: 0.6,
+                angry: 0.7,
+                curious: 0.9,
+                scared: 0.7,
+                confused: 0.8,
+                shifty: 1.5,
+                sync_blink: 1.2,
+                wave: 1.0,
+                conversation: 1.5,
+                dance: 1.2
+            },
+            conditions: {
+                multipleEyesVisible: {
+                    minEyes: 2,
+                    scriptPreferences: ['conversation', 'sync_blink', 'wave', 'dance']
+                },
+                singleEyeVisible: {
+                    scriptPreferences: ['surprise', 'roll_eyes', 'sleepy', 'angry', 'curious', 'scared', 'shifty']
+                }
+            }
+        };
+
+        // Start the director
+        function startDirector(mode = 'active') {
+            if (directorState.enabled) return;
+
+            directorState.enabled = true;
+            directorState.mode = mode;
+
+            // Apply mode configuration
+            const modeConfig = directorConfig.modes[mode];
+            if (modeConfig) {
+                directorState.evaluationInterval = modeConfig.evaluationInterval;
+                directorState.scriptCooldown = modeConfig.scriptCooldown;
+                directorState.triggerProbabilities = { ...modeConfig.triggerProbabilities };
+            }
+
+            console.log(`Director started in ${mode} mode`);
+            scheduleDirectorEvaluation();
+        }
+
+        // Stop the director
+        function stopDirector() {
+            if (!directorState.enabled) return;
+
+            directorState.enabled = false;
+
+            if (directorState.evaluationTimeoutId) {
+                clearTimeout(directorState.evaluationTimeoutId);
+                directorState.evaluationTimeoutId = null;
+            }
+
+            console.log('Director stopped');
+        }
+
+        // Main director evaluation loop
+        function evaluateDirector() {
+            if (!directorState.enabled) return;
+
+            const now = Date.now();
+
+            // Get all visible eye sets
+            const visibleSets = eyeSets
+                .map((set, idx) => ({ set, idx }))
+                .filter(({ set }) => set && set.visible);
+
+            if (visibleSets.length === 0) {
+                scheduleDirectorEvaluation();
+                return;
+            }
+
+            // Check cooldown
+            if (now - directorState.lastScriptTime < directorState.scriptCooldown) {
+                scheduleDirectorEvaluation();
+                return;
+            }
+
+            // Evaluate each visible eye set
+            for (const { set, idx } of visibleSets) {
+                // NEVER interrupt a running script - this is critical!
+                if (set.behavior === BehaviorType.SCRIPTED && set.currentScript) {
+                    continue;
+                }
+
+                // Skip if recently changed behavior (cooldown period)
+                if (now - set.lastBehaviorChange < 3000) {
+                    continue;
+                }
+
+                // Decide action based on probabilities
+                const action = weightedRandomChoice(directorState.triggerProbabilities);
+
+                switch (action) {
+                    case 'autonomous':
+                        if (set.behavior !== BehaviorType.AUTONOMOUS) {
+                            setEyeBehavior(idx, BehaviorType.AUTONOMOUS);
+                        }
+                        break;
+
+                    case 'tracking':
+                        if (set.behavior !== BehaviorType.TRACKING) {
+                            setEyeBehavior(idx, BehaviorType.TRACKING);
+                        }
+                        break;
+
+                    case 'scripted':
+                        triggerDirectorScript(idx, visibleSets);
+                        directorState.lastScriptTime = now;
+                        break;
+                }
+            }
+
+            scheduleDirectorEvaluation();
+        }
+
+        // Schedule next director evaluation
+        function scheduleDirectorEvaluation() {
+            if (!directorState.enabled) return;
+
+            // Add some randomness to evaluation timing
+            const jitter = Math.random() * 2000 - 1000; // ±1 second
+            const delay = directorState.evaluationInterval + jitter;
+
+            directorState.evaluationTimeoutId = setTimeout(evaluateDirector, delay);
+        }
+
+        // Trigger a script chosen by the director
+        function triggerDirectorScript(setIndex, visibleSets) {
+            // Determine if this should be an interaction
+            const shouldInteract = visibleSets.length > 1 &&
+                                   Math.random() < directorState.interactionChance;
+
+            let scriptId;
+
+            if (shouldInteract) {
+                // Choose interaction script
+                const interactionScripts = directorConfig.conditions.multipleEyesVisible.scriptPreferences;
+                scriptId = weightedRandomScriptChoice(interactionScripts);
+            } else {
+                // Choose solo script
+                const soloScripts = directorConfig.conditions.singleEyeVisible.scriptPreferences;
+                scriptId = weightedRandomScriptChoice(soloScripts);
+            }
+
+            if (scriptId) {
+                console.log(`Director triggering script "${scriptId}" on eye set ${setIndex}`);
+                executeScript(setIndex, scriptId);
+            }
+        }
+
+        // Weighted random choice from probability distribution
+        function weightedRandomChoice(weights) {
+            const rand = Math.random();
+            let cumulative = 0;
+
+            for (const [choice, probability] of Object.entries(weights)) {
+                cumulative += probability;
+                if (rand < cumulative) {
+                    return choice;
+                }
+            }
+
+            return Object.keys(weights)[0]; // Fallback
+        }
+
+        // Weighted random script selection
+        function weightedRandomScriptChoice(scriptIds) {
+            // Filter to loaded scripts with weights
+            const available = scriptIds.filter(id =>
+                scriptExecutionState.loadedScripts.has(id) &&
+                directorConfig.scriptWeights[id] !== undefined
+            );
+
+            if (available.length === 0) return null;
+
+            // Calculate total weight
+            const totalWeight = available.reduce((sum, id) =>
+                sum + (directorConfig.scriptWeights[id] || 1.0), 0
+            );
+
+            // Weighted random selection
+            let rand = Math.random() * totalWeight;
+
+            for (const scriptId of available) {
+                const weight = directorConfig.scriptWeights[scriptId] || 1.0;
+                rand -= weight;
+                if (rand <= 0) {
+                    return scriptId;
+                }
+            }
+
+            return available[0]; // Fallback
+        }
+
+        // Change director mode
+        function setDirectorMode(mode) {
+            if (!directorConfig.modes[mode]) {
+                console.error(`Unknown director mode: ${mode}`);
+                return;
+            }
+
+            const wasEnabled = directorState.enabled;
+
+            if (wasEnabled) {
+                stopDirector();
+            }
+
+            directorState.mode = mode;
+
+            if (wasEnabled) {
+                startDirector(mode);
+            }
+
+            console.log(`Director mode changed to: ${mode}`);
         }
 
         // Gamepad functions
@@ -1227,9 +2275,11 @@
                 eyes.forEach(eye => eye.classList.remove('blinking'));
             }, 100);
 
-            // Schedule next blink randomly between 4-20 seconds
-            const nextBlinkDelay = Math.random() * 16000 + 4000; // 4000ms to 20000ms
-            eyeSet.blinkTimeoutId = setTimeout(() => blinkEyeSet(setIndex), nextBlinkDelay);
+            // Only schedule next blink if still in AUTONOMOUS mode
+            if (eyeSet.behavior === BehaviorType.AUTONOMOUS) {
+                const nextBlinkDelay = Math.random() * 16000 + 4000; // 4000ms to 20000ms
+                eyeSet.blinkTimeoutId = setTimeout(() => blinkEyeSet(setIndex), nextBlinkDelay);
+            }
         }
 
         // Per-set iris movement function
@@ -1250,15 +2300,22 @@
                 iris.style.transform = `translate(${randomX}px, ${randomY}px)`;
             });
 
-            // Schedule next movement randomly between 1-5 seconds
-            const nextMoveDelay = Math.random() * 5000 + 1000; // 1000ms to 5000ms
-            eyeSet.moveTimeoutId = setTimeout(() => moveEyeSetIris(setIndex), nextMoveDelay);
+            // Only schedule next movement if still in AUTONOMOUS mode
+            if (eyeSet.behavior === BehaviorType.AUTONOMOUS) {
+                const nextMoveDelay = Math.random() * 5000 + 1000; // 1000ms to 5000ms
+                eyeSet.moveTimeoutId = setTimeout(() => moveEyeSetIris(setIndex), nextMoveDelay);
+            }
         }
 
         // Start all animations for an eye set
         function startEyeSetAnimations(setIndex) {
             const eyeSet = eyeSets[setIndex];
             if (!eyeSet) return;
+
+            // Only start autonomous animations if in AUTONOMOUS behavior mode
+            if (eyeSet.behavior !== BehaviorType.AUTONOMOUS) {
+                return;
+            }
 
             // Apply color animations with random delay to desync from other sets
             const randomDelay = Math.random() * 60; // 0-60 seconds
@@ -1416,7 +2473,10 @@
                 const state = {
                     eyeSets: [],
                     activeSetIndex: activeSetIndex,
-                    dripsEnabled: dripsEnabled
+                    dripsEnabled: dripsEnabled,
+                    scriptExecutionState: {
+                        defaultScripts: scriptExecutionState.defaultScripts
+                    }
                 };
 
                 // Save only persistable properties for each eye set
@@ -1429,7 +2489,8 @@
                             posX: eyeSet.posX,
                             posY: eyeSet.posY,
                             visible: eyeSet.visible,
-                            everShown: eyeSet.everShown
+                            everShown: eyeSet.everShown,
+                            behavior: eyeSet.behavior || BehaviorType.AUTONOMOUS
                         };
                     } else {
                         state.eyeSets[i] = null;
@@ -1505,6 +2566,90 @@
                     stopAllDrips();
                 }
                 debouncedSaveState();
+                return;
+            }
+
+            // D key - toggle director on/off
+            if (key === 'd') {
+                event.preventDefault();
+                if (directorState.enabled) {
+                    stopDirector();
+                } else {
+                    startDirector(directorState.mode);
+                }
+                return;
+            }
+
+            // M key - cycle director mode (passive -> active -> chaotic)
+            if (key === 'm') {
+                event.preventDefault();
+                if (directorState.enabled) {
+                    const modes = ['passive', 'active', 'chaotic'];
+                    const currentIndex = modes.indexOf(directorState.mode);
+                    const nextMode = modes[(currentIndex + 1) % modes.length];
+                    setDirectorMode(nextMode);
+                } else {
+                    console.log('Director is not enabled. Press D to start.');
+                }
+                return;
+            }
+
+            // B key - cycle behavior mode (autonomous -> tracking -> scripted)
+            if (key === 'b') {
+                event.preventDefault();
+                if (activeSetIndex !== -1) {
+                    cycleBehavior(activeSetIndex);
+                }
+                return;
+            }
+
+            // S key - cycle through available scripts
+            if (key === 's') {
+                event.preventDefault();
+                if (activeSetIndex !== -1) {
+                    // Get all loaded scripts
+                    const scriptIds = Array.from(scriptExecutionState.loadedScripts.keys());
+                    if (scriptIds.length === 0) {
+                        console.log('No scripts loaded yet');
+                        return;
+                    }
+
+                    const eyeSet = eyeSets[activeSetIndex];
+                    if (eyeSet && eyeSet.behavior === BehaviorType.SCRIPTED && eyeSet.currentScript) {
+                        // Already in scripted mode with a script running, cycle to next
+                        cycleScript(activeSetIndex);
+                    } else {
+                        // Not in scripted mode or no script running, start with first script
+                        const firstScript = scriptIds[0];
+                        executeScript(activeSetIndex, firstScript);
+                    }
+                }
+                return;
+            }
+
+            // P key - play default script for active eye set
+            if (key === 'p') {
+                event.preventDefault();
+                if (activeSetIndex !== -1) {
+                    const defaultScript = scriptExecutionState.defaultScripts[activeSetIndex];
+                    if (defaultScript) {
+                        executeScript(activeSetIndex, defaultScript);
+                    } else {
+                        console.log('No default script assigned to eye set ' + activeSetIndex);
+                    }
+                }
+                return;
+            }
+
+            // Escape key - stop current script and return to autonomous
+            if (key === 'escape') {
+                event.preventDefault();
+                if (activeSetIndex !== -1) {
+                    const eyeSet = eyeSets[activeSetIndex];
+                    if (eyeSet && eyeSet.currentScript) {
+                        stopScript(activeSetIndex);
+                    }
+                }
                 return;
             }
 
@@ -1664,7 +2809,10 @@
                 eyeSet.element.classList.remove('hidden');
                 // Apply initial transform to center the eyes
                 updateEyeSetTransform(setIndex);
-                // Stop existing animations and restart with fresh timing
+
+                // Ensure we're in autonomous mode and start animations cleanly
+                eyeSet.behavior = BehaviorType.AUTONOMOUS;
+                eyeSet.lastBehaviorChange = Date.now();
                 stopEyeSetAnimations(setIndex);
                 startEyeSetAnimations(setIndex);
             }
@@ -1710,9 +2858,17 @@
                 helpMessage.classList.remove('visible');
             }, 5100);
 
+            // Preload scripts
+            preloadAllScripts();
+
             // Try to restore saved state from localStorage
             const savedState = loadStateFromLocalStorage();
             if (savedState && savedState.eyeSets) {
+                // Restore script execution state
+                if (savedState.scriptExecutionState) {
+                    scriptExecutionState.defaultScripts = savedState.scriptExecutionState.defaultScripts || {};
+                }
+
                 // Restore eye sets from saved state
                 for (let i = 0; i < maxSets; i++) {
                     const savedSet = savedState.eyeSets[i];
@@ -1727,12 +2883,22 @@
                         eyeSet.posY = savedSet.posY;
                         eyeSet.visible = savedSet.visible;
                         eyeSet.everShown = savedSet.everShown;
+                        eyeSet.behavior = savedSet.behavior || BehaviorType.AUTONOMOUS;
 
                         // If this set was visible, show it
                         if (savedSet.visible) {
                             eyeSet.element.classList.remove('hidden');
                             updateEyeSetTransform(i);
-                            startEyeSetAnimations(i);
+
+                            // Start appropriate behavior
+                            if (eyeSet.behavior === BehaviorType.TRACKING) {
+                                startEyeSetTracking(i);
+                            } else {
+                                // Default to autonomous for other modes
+                                // (scripted mode doesn't persist - scripts don't auto-play on load)
+                                eyeSet.behavior = BehaviorType.AUTONOMOUS;
+                                startEyeSetAnimations(i);
+                            }
                         }
                     }
                 }

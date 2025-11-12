@@ -1,0 +1,42 @@
+{
+  "scriptId": "scared",
+  "name": "Scared Eyes",
+  "description": "Wide eyes with shaking",
+  "duration": 4.5,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "widen",
+      "params": { "intensity": 0.6, "duration": 0.2 }
+    },
+    {
+      "time": 0.3,
+      "action": "moveIris",
+      "params": { "x": 0, "y": -10, "duration": 0.2 }
+    },
+    {
+      "time": 0.8,
+      "action": "shake",
+      "params": { "intensity": 0.6, "duration": 1.0, "frequency": 12 }
+    },
+    {
+      "time": 2.0,
+      "action": "blink"
+    },
+    {
+      "time": 2.5,
+      "action": "shake",
+      "params": { "intensity": 0.4, "duration": 0.8, "frequency": 10 }
+    },
+    {
+      "time": 3.5,
+      "action": "moveIris",
+      "params": { "x": 0, "y": 0, "duration": 0.5 }
+    },
+    {
+      "time": 4.0,
+      "action": "setScale",
+      "params": { "scale": 1.0, "duration": 0.3 }
+    }
+  ]
+}

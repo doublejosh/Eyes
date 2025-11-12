@@ -1,0 +1,64 @@
+{
+  "scriptId": "dance",
+  "name": "Eye Dance",
+  "description": "Coordinated movement pattern",
+  "interactions": [
+    { "targetSet": 1, "startTime": 0.0 }
+  ],
+  "duration": 8.0,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "moveIris",
+      "params": { "x": -30, "y": 0, "duration": 0.5 }
+    },
+    {
+      "time": 0.6,
+      "action": "moveIris",
+      "params": { "x": 30, "y": 0, "duration": 0.5 }
+    },
+    {
+      "time": 1.2,
+      "action": "moveIris",
+      "params": { "x": -30, "y": 0, "duration": 0.5 }
+    },
+    {
+      "time": 1.8,
+      "action": "moveIris",
+      "params": { "x": 30, "y": 0, "duration": 0.5 }
+    },
+    {
+      "time": 2.5,
+      "action": "blink"
+    },
+    {
+      "time": 3.0,
+      "action": "rollEyes",
+      "params": { "direction": "right", "duration": 1.5 }
+    },
+    {
+      "time": 5.0,
+      "action": "blink"
+    },
+    {
+      "time": 5.5,
+      "action": "widen",
+      "params": { "intensity": 0.5, "duration": 0.3 }
+    },
+    {
+      "time": 6.5,
+      "action": "squint",
+      "params": { "intensity": 0.5, "duration": 0.3 }
+    },
+    {
+      "time": 7.0,
+      "action": "setScale",
+      "params": { "scale": 1.0, "duration": 0.5 }
+    },
+    {
+      "time": 7.0,
+      "action": "moveIris",
+      "params": { "x": 0, "y": 0, "duration": 0.5 }
+    }
+  ]
+}

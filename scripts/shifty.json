@@ -1,0 +1,62 @@
+{
+  "scriptId": "shifty",
+  "name": "Shifty Eyes",
+  "description": "Suspicious looking around - squints and darts left and right",
+  "duration": 4.5,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "squint",
+      "params": { "intensity": 0.4, "duration": 0.3 }
+    },
+    {
+      "time": 0.5,
+      "action": "dart",
+      "params": { "direction": "left", "duration": 0.12 }
+    },
+    {
+      "time": 0.8,
+      "action": "dart",
+      "params": { "direction": "right", "duration": 0.12 }
+    },
+    {
+      "time": 1.1,
+      "action": "dart",
+      "params": { "direction": "left", "duration": 0.12 }
+    },
+    {
+      "time": 1.4,
+      "action": "dart",
+      "params": { "direction": "right", "duration": 0.12 }
+    },
+    {
+      "time": 1.8,
+      "action": "moveIris",
+      "params": { "x": -45, "y": 0, "duration": 0.15 }
+    },
+    {
+      "time": 2.2,
+      "action": "moveIris",
+      "params": { "x": 45, "y": 0, "duration": 0.2 }
+    },
+    {
+      "time": 2.7,
+      "action": "moveIris",
+      "params": { "x": -40, "y": 0, "duration": 0.15 }
+    },
+    {
+      "time": 3.1,
+      "action": "blink"
+    },
+    {
+      "time": 3.5,
+      "action": "moveIris",
+      "params": { "x": 0, "y": 0, "duration": 0.3 }
+    },
+    {
+      "time": 3.8,
+      "action": "setScale",
+      "params": { "scale": 1.0, "duration": 0.3 }
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "scriptId": "surprise",
+  "name": "Surprise Reaction",
+  "description": "Eyes widen in surprise",
+  "duration": 3.5,
+  "timeline": [
+    {
+      "time": 0.1,
+      "action": "setScale",
+      "params": { "scale": 1.5, "duration": 0.3 }
+    },
+    {
+      "time": 0.1,
+      "action": "setGap",
+      "params": { "gap": 25, "duration": 0.3 }
+    },
+    {
+      "time": 0.2,
+      "action": "moveIris",
+      "params": { "x": 0, "y": -15, "duration": 0.2 }
+    },
+    {
+      "time": 0.5,
+      "action": "blink"
+    },
+    {
+      "time": 2.5,
+      "action": "setScale",
+      "params": { "scale": 1.0, "duration": 0.5 }
+    },
+    {
+      "time": 2.5,
+      "action": "setGap",
+      "params": { "gap": 20, "duration": 0.5 }
+    }
+  ]
+}

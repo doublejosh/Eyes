@@ -1,0 +1,22 @@
+{
+  "scriptId": "cross_eyes",
+  "name": "Cross Eyes",
+  "description": "Eyes cross toward center",
+  "duration": 4.0,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "crossEyes",
+      "params": { "intensity": 0.8, "duration": 0.8 }
+    },
+    {
+      "time": 2.0,
+      "action": "blink"
+    },
+    {
+      "time": 3.0,
+      "action": "uncrossEyes",
+      "params": { "duration": 0.5 }
+    }
+  ]
+}

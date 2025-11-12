@@ -1,0 +1,35 @@
+{
+  "scriptId": "sleepy",
+  "name": "Sleepy Eyes",
+  "description": "Slow blinks and droopy movement",
+  "duration": 8.0,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "moveIris",
+      "params": { "x": 0, "y": 5, "duration": 1.0 }
+    },
+    {
+      "time": 1.5,
+      "action": "blink"
+    },
+    {
+      "time": 3.0,
+      "action": "squint",
+      "params": { "intensity": 0.3, "duration": 0.8 }
+    },
+    {
+      "time": 4.5,
+      "action": "blink"
+    },
+    {
+      "time": 6.0,
+      "action": "blink"
+    },
+    {
+      "time": 7.0,
+      "action": "setScale",
+      "params": { "scale": 1.0, "duration": 0.5 }
+    }
+  ]
+}
