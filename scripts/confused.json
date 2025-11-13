@@ -6,6 +6,11 @@
   "timeline": [
     {
       "time": 0.0,
+      "action": "setColor",
+      "params": { "color": "#D2691E" }
+    },
+    {
+      "time": 0.0,
       "action": "crossEyes",
       "params": { "intensity": 0.6, "duration": 0.5 }
     },
@@ -17,6 +22,11 @@
       "time": 1.5,
       "action": "uncrossEyes",
       "params": { "duration": 0.5 }
+    },
+    {
+      "time": 2.0,
+      "action": "fadeColor",
+      "params": { "fromColor": "#D2691E", "toColor": "#808080", "duration": 1.0 }
     },
     {
       "time": 2.0,
@@ -41,6 +51,11 @@
       "time": 4.0,
       "action": "rollEyes",
       "params": { "direction": "right", "duration": 1.0 }
+    },
+    {
+      "time": 4.5,
+      "action": "fadeColor",
+      "params": { "fromColor": "#808080", "toColor": "#A9A9A9", "duration": 0.8 }
     },
     {
       "time": 5.5,

@@ -6,6 +6,11 @@
   "timeline": [
     {
       "time": 0.0,
+      "action": "setColor",
+      "params": { "color": "#00FA9A" }
+    },
+    {
+      "time": 0.0,
       "action": "widen",
       "params": { "intensity": 0.4, "duration": 0.3 }
     },

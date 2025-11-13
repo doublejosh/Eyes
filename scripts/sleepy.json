@@ -6,6 +6,11 @@
   "timeline": [
     {
       "time": 0.0,
+      "action": "fadeColor",
+      "params": { "fromColor": "#9370DB", "toColor": "#483D8B", "duration": 2.0 }
+    },
+    {
+      "time": 0.0,
       "action": "moveIris",
       "params": { "x": 0, "y": 5, "duration": 1.0 }
     },

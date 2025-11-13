@@ -5,6 +5,11 @@
   "duration": 3.5,
   "timeline": [
     {
+      "time": 0.0,
+      "action": "setColor",
+      "params": { "color": "#FFD700" }
+    },
+    {
       "time": 0.1,
       "action": "setScale",
       "params": { "scale": 1.5, "duration": 0.3 }
@@ -22,6 +27,11 @@
     {
       "time": 0.5,
       "action": "blink"
+    },
+    {
+      "time": 1.0,
+      "action": "fadeColor",
+      "params": { "fromColor": "#FFD700", "toColor": "#FFA500", "duration": 1.5 }
     },
     {
       "time": 2.5,

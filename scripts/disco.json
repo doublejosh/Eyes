@@ -1,0 +1,156 @@
+{
+  "scriptId": "disco",
+  "name": "Disco Eyes",
+  "description": "Rapid random color flashes with movement",
+  "duration": 6.0,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "setColor",
+      "params": { "color": "#FF00FF" }
+    },
+    {
+      "time": 0.3,
+      "action": "setColor",
+      "params": { "color": "#00FFFF" }
+    },
+    {
+      "time": 0.3,
+      "action": "dart",
+      "params": { "direction": "left", "duration": 0.1 }
+    },
+    {
+      "time": 0.6,
+      "action": "setColor",
+      "params": { "color": "#FFFF00" }
+    },
+    {
+      "time": 0.6,
+      "action": "dart",
+      "params": { "direction": "right", "duration": 0.1 }
+    },
+    {
+      "time": 0.9,
+      "action": "setColor",
+      "params": { "color": "#FF1493" }
+    },
+    {
+      "time": 0.9,
+      "action": "dart",
+      "params": { "direction": "up", "duration": 0.1 }
+    },
+    {
+      "time": 1.2,
+      "action": "setColor",
+      "params": { "color": "#00FF00" }
+    },
+    {
+      "time": 1.2,
+      "action": "dart",
+      "params": { "direction": "down", "duration": 0.1 }
+    },
+    {
+      "time": 1.5,
+      "action": "setColor",
+      "params": { "color": "#FF4500" }
+    },
+    {
+      "time": 1.8,
+      "action": "setColor",
+      "params": { "color": "#9400D3" }
+    },
+    {
+      "time": 1.8,
+      "action": "shake",
+      "params": { "intensity": 0.3, "duration": 0.4, "frequency": 15 }
+    },
+    {
+      "time": 2.1,
+      "action": "setColor",
+      "params": { "color": "#00CED1" }
+    },
+    {
+      "time": 2.4,
+      "action": "setColor",
+      "params": { "color": "#FFD700" }
+    },
+    {
+      "time": 2.4,
+      "action": "blink"
+    },
+    {
+      "time": 2.7,
+      "action": "setColor",
+      "params": { "color": "#FF69B4" }
+    },
+    {
+      "time": 3.0,
+      "action": "setColor",
+      "params": { "color": "#32CD32" }
+    },
+    {
+      "time": 3.0,
+      "action": "dart",
+      "params": { "direction": "random", "duration": 0.1 }
+    },
+    {
+      "time": 3.3,
+      "action": "setColor",
+      "params": { "color": "#FF6347" }
+    },
+    {
+      "time": 3.6,
+      "action": "setColor",
+      "params": { "color": "#4169E1" }
+    },
+    {
+      "time": 3.6,
+      "action": "dart",
+      "params": { "direction": "random", "duration": 0.1 }
+    },
+    {
+      "time": 3.9,
+      "action": "setColor",
+      "params": { "color": "#FF1493" }
+    },
+    {
+      "time": 4.2,
+      "action": "setColor",
+      "params": { "color": "#00FFFF" }
+    },
+    {
+      "time": 4.2,
+      "action": "blink"
+    },
+    {
+      "time": 4.5,
+      "action": "setColor",
+      "params": { "color": "#ADFF2F" }
+    },
+    {
+      "time": 4.8,
+      "action": "setColor",
+      "params": { "color": "#FF00FF" }
+    },
+    {
+      "time": 4.8,
+      "action": "shake",
+      "params": { "intensity": 0.4, "duration": 0.5, "frequency": 12 }
+    },
+    {
+      "time": 5.1,
+      "action": "setColor",
+      "params": { "color": "#FFD700" }
+    },
+    {
+      "time": 5.4,
+      "action": "setColor",
+      "params": { "color": "#FF4500" }
+    },
+    {
+      "time": 5.7,
+      "action": "moveIris",
+      "params": { "x": 0, "y": 0, "duration": 0.3 }
+    }
+  ]
+}

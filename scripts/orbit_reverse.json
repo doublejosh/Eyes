@@ -1,0 +1,28 @@
+{
+  "scriptId": "orbit_reverse",
+  "name": "Reverse Orbit Eyes",
+  "description": "Irises roll counter-clockwise around eye edges",
+  "duration": 6.0,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "orbitIris",
+      "params": {
+        "duration": 1.5,
+        "clockwise": false,
+        "radiusX": 50,
+        "radiusY": 10,
+        "revolutions": 3
+      }
+    },
+    {
+      "time": 4.8,
+      "action": "moveIris",
+      "params": { "x": 0, "y": 0, "duration": 0.6 }
+    },
+    {
+      "time": 5.5,
+      "action": "blink"
+    }
+  ]
+}

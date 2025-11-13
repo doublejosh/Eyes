@@ -6,6 +6,11 @@
   "timeline": [
     {
       "time": 0.0,
+      "action": "setColor",
+      "params": { "color": "#E0FFFF" }
+    },
+    {
+      "time": 0.0,
       "action": "widen",
       "params": { "intensity": 0.6, "duration": 0.2 }
     },
@@ -18,6 +23,11 @@
       "time": 0.8,
       "action": "shake",
       "params": { "intensity": 0.6, "duration": 1.0, "frequency": 12 }
+    },
+    {
+      "time": 1.5,
+      "action": "fadeColor",
+      "params": { "fromColor": "#E0FFFF", "toColor": "#87CEEB", "duration": 1.0 }
     },
     {
       "time": 2.0,

@@ -6,6 +6,11 @@
   "timeline": [
     {
       "time": 0.0,
+      "action": "fadeColor",
+      "params": { "fromColor": "#FF4500", "toColor": "#8B0000", "duration": 0.8 }
+    },
+    {
+      "time": 0.0,
       "action": "squint",
       "params": { "intensity": 0.5, "duration": 0.3 }
     },

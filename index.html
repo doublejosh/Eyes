@@ -780,7 +780,8 @@
             const scriptList = [
                 'surprise', 'cross_eyes', 'roll_eyes', 'sleepy',
                 'angry', 'curious', 'scared', 'confused', 'shifty',
-                'sync_blink', 'wave', 'conversation', 'conversation_partner', 'dance'
+                'sync_blink', 'wave', 'conversation', 'conversation_partner', 'dance',
+                'rainbow', 'disco', 'slot_machine', 'orbit', 'orbit_reverse'
             ];
 
             const promises = scriptList.map(id => loadScript(id));
@@ -1245,6 +1246,62 @@
             });
         }
 
+        // Smooth orbital motion around eye edges
+        function actionOrbitIris(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const {
+                duration = 3.0,           // Duration for one complete orbit
+                clockwise = true,         // Direction of rotation
+                radiusX = 50,            // Horizontal radius (max x displacement)
+                radiusY = 10,            // Vertical radius (max y displacement)
+                revolutions = 1          // Number of complete orbits
+            } = params;
+
+            const startTime = performance.now();
+            const totalDuration = duration * revolutions * 1000; // Convert to ms
+
+            // Store animation ID so it can be cancelled
+            if (!eyeSet.orbitAnimationId) {
+                eyeSet.orbitAnimationId = null;
+            }
+
+            // Cancel any existing orbit animation
+            if (eyeSet.orbitAnimationId) {
+                cancelAnimationFrame(eyeSet.orbitAnimationId);
+            }
+
+            function updateOrbit(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / totalDuration, 1.0);
+
+                // Calculate angle (0 to 2π * revolutions)
+                let angle = progress * Math.PI * 2 * revolutions;
+                if (!clockwise) angle = -angle;
+
+                // Calculate position on ellipse
+                const x = Math.cos(angle) * radiusX;
+                const y = Math.sin(angle) * radiusY;
+
+                // Apply transform to iris groups
+                const irisGroups = eyeSet.element.querySelectorAll('.iris');
+                irisGroups.forEach(iris => {
+                    iris.style.transform = `translate(${x}px, ${y}px)`;
+                    iris.style.transition = 'none'; // Disable CSS transitions for smooth frame-by-frame updates
+                });
+
+                // Continue animation if not complete
+                if (progress < 1.0) {
+                    eyeSet.orbitAnimationId = requestAnimationFrame(updateOrbit);
+                } else {
+                    eyeSet.orbitAnimationId = null;
+                }
+            }
+
+            eyeSet.orbitAnimationId = requestAnimationFrame(updateOrbit);
+        }
+
         // Populate action registry with advanced actions
         actionRegistry['crossEyes'] = actionCrossEyes;
         actionRegistry['uncrossEyes'] = actionUncrossEyes;
@@ -1258,6 +1315,7 @@
         actionRegistry['stopDripping'] = actionStopDripping;
         actionRegistry['setColor'] = actionSetColor;
         actionRegistry['fadeColor'] = actionFadeColor;
+        actionRegistry['orbitIris'] = actionOrbitIris;
 
         // ============================================================
         // PHASE 5: BEHAVIOR MANAGEMENT
