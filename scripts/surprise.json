@@ -15,11 +15,6 @@
       "params": { "height": -30, "duration": 0.2 }
     },
     {
-      "time": 0.1,
-      "action": "setScale",
-      "params": { "scale": 1.2, "duration": 0.3 }
-    },
-    {
       "time": 0.2,
       "action": "moveIris",
       "params": { "x": 0, "y": -15, "duration": 0.2 }
@@ -37,16 +32,6 @@
       "time": 2.5,
       "action": "relaxBrows",
       "params": { "duration": 0.5 }
-    },
-    {
-      "time": 2.5,
-      "action": "setScale",
-      "params": { "scale": 1.0, "duration": 0.5 }
-    },
-    {
-      "time": 2.5,
-      "action": "setGap",
-      "params": { "gap": 20, "duration": 0.5 }
     }
   ]
 }

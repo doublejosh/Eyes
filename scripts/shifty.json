@@ -52,11 +52,6 @@
       "time": 3.5,
       "action": "moveIris",
       "params": { "x": 0, "y": 0, "duration": 0.3 }
-    },
-    {
-      "time": 3.8,
-      "action": "setScale",
-      "params": { "scale": 1.0, "duration": 0.3 }
     }
   ]
 }

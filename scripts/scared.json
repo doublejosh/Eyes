@@ -15,11 +15,6 @@
       "params": { "height": -18, "duration": 0.15 }
     },
     {
-      "time": 0.0,
-      "action": "widen",
-      "params": { "intensity": 0.6, "duration": 0.2 }
-    },
-    {
       "time": 0.3,
       "action": "moveIris",
       "params": { "x": 0, "y": -10, "duration": 0.2 }
@@ -62,11 +57,6 @@
       "time": 4.0,
       "action": "relaxBrows",
       "params": { "duration": 0.3 }
-    },
-    {
-      "time": 4.0,
-      "action": "setScale",
-      "params": { "scale": 1.0, "duration": 0.3 }
     }
   ]
 }

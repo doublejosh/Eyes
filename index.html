@@ -63,13 +63,7 @@
             transition: transform 0.1s ease-out;
         }
 
-        .eye.blinking {
-            transform: scaleY(0.1);
-        }
-
-        .eye.squinting {
-            transform: scaleY(0.5);
-        }
+        /* Removed CSS-based eye-white scaling - now handled via JavaScript ry animation */
 
         .iris {
             transition: transform 1.5s ease-out;
@@ -430,6 +424,9 @@
                     <stop class="iris-gradient-stop-2" offset="60%" stop-color="#4CAF50" stop-opacity="0.3"/>
                     <stop class="iris-gradient-stop-3" offset="100%" stop-color="#388E3C" stop-opacity="0.6"/>
                 </radialGradient>
+                <mask id="eyeWhiteMask-${setId}" maskUnits="userSpaceOnUse">
+                    <ellipse class="eye-white-clip" cx="100" cy="60" rx="95" ry="55" fill="white"/>
+                </mask>
                 <filter id="irisBlur-${setId}" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
                 </filter>
@@ -441,7 +438,7 @@
             <ellipse class="eye-white" cx="100" cy="60" rx="95" ry="55" fill="white" stroke="#ddd" stroke-width="2"/>
 
             <!-- Green iris -->
-            <g class="iris">
+            <g class="iris" mask="url(#eyeWhiteMask-${setId})">
                 <!-- Base iris with color-changing gradient -->
                 <ellipse class="iris-main" cx="100" cy="60" rx="35" ry="35" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
                 <!-- Overlapping gradient clouds for texture -->
@@ -454,7 +451,7 @@
             </g>
 
             <!-- Black pupil -->
-            <g class="iris">
+            <g class="iris" mask="url(#eyeWhiteMask-${setId})">
                 <ellipse cx="100" cy="60" rx="15" ry="15" fill="#000"/>
                 <!-- Lens flare inside pupil -->
                 <ellipse cx="95" cy="55" rx="3" ry="4" fill="rgba(255,255,255,0.9)"/>
@@ -504,6 +501,9 @@
                     <stop class="iris-gradient-stop-2" offset="60%" stop-color="#4CAF50" stop-opacity="0.3"/>
                     <stop class="iris-gradient-stop-3" offset="100%" stop-color="#388E3C" stop-opacity="0.6"/>
                 </radialGradient>
+                <mask id="eyeWhiteMaskRight-${setId}" maskUnits="userSpaceOnUse">
+                    <ellipse class="eye-white-clip" cx="100" cy="60" rx="95" ry="55" fill="white"/>
+                </mask>
                 <filter id="irisBlurRight-${setId}" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
                 </filter>
@@ -515,7 +515,7 @@
             <ellipse class="eye-white" cx="100" cy="60" rx="95" ry="55" fill="white" stroke="#ddd" stroke-width="2"/>
 
             <!-- Green iris -->
-            <g class="iris">
+            <g class="iris" mask="url(#eyeWhiteMaskRight-${setId})">
                 <!-- Base iris with color-changing gradient -->
                 <ellipse class="iris-main" cx="100" cy="60" rx="35" ry="35" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
                 <!-- Overlapping gradient clouds for texture -->
@@ -528,7 +528,7 @@
             </g>
 
             <!-- Black pupil -->
-            <g class="iris">
+            <g class="iris" mask="url(#eyeWhiteMaskRight-${setId})">
                 <ellipse cx="100" cy="60" rx="15" ry="15" fill="#000"/>
                 <!-- Lens flare inside pupil -->
                 <ellipse cx="95" cy="55" rx="3" ry="4" fill="rgba(255,255,255,0.9)"/>
@@ -2751,14 +2751,60 @@
             const eyeSet = eyeSets[setIndex];
             if (!eyeSet || !eyeSet.visible) return;
 
-            const eyes = eyeSet.element.querySelectorAll('.eye');
+            const eyeWhites = eyeSet.element.querySelectorAll('.eye-white');
+            const clipEllipses = eyeSet.element.querySelectorAll('.eye-white-clip');
 
-            // Add blink class
-            eyes.forEach(eye => eye.classList.add('blinking'));
+            // Get current ry values (in case animation is in progress)
+            const currentWhiteRy = eyeWhites.length > 0 ? parseFloat(eyeWhites[0].getAttribute('ry')) || 55 : 55;
+            const currentClipRy = clipEllipses.length > 0 ? parseFloat(clipEllipses[0].getAttribute('ry')) || 55 : 55;
 
-            // Remove blink class after 100ms (blink duration)
+            // Animate eye-white and clipPath closing over 100ms
+            const closeStartTime = performance.now();
+            function animateClose(currentTime) {
+                const elapsed = currentTime - closeStartTime;
+                const progress = Math.min(elapsed / 100, 1);
+                const whiteRy = Math.max(5.5, currentWhiteRy - (currentWhiteRy - 5.5) * progress);
+                const clipRy = Math.max(5.5, currentClipRy - (currentClipRy - 5.5) * progress);
+
+                eyeWhites.forEach(ellipse => {
+                    ellipse.setAttribute('ry', whiteRy.toString());
+                });
+                clipEllipses.forEach(ellipse => {
+                    ellipse.setAttribute('ry', clipRy.toString());
+                });
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateClose);
+                }
+            }
+            requestAnimationFrame(animateClose);
+
+            // Animate back to normal after 100ms (blink duration)
             setTimeout(() => {
-                eyes.forEach(eye => eye.classList.remove('blinking'));
+                // Get current ry values when opening starts
+                const currentWhiteOpen = eyeWhites.length > 0 ? parseFloat(eyeWhites[0].getAttribute('ry')) || 5.5 : 5.5;
+                const currentClipOpen = clipEllipses.length > 0 ? parseFloat(clipEllipses[0].getAttribute('ry')) || 5.5 : 5.5;
+
+                // Animate eye-white and clipPath back to normal over 100ms
+                const openStartTime = performance.now();
+                function animateOpen(currentTime) {
+                    const elapsed = currentTime - openStartTime;
+                    const progress = Math.min(elapsed / 100, 1);
+                    const whiteRy = Math.min(55, currentWhiteOpen + (55 - currentWhiteOpen) * progress);
+                    const clipRy = Math.min(55, currentClipOpen + (55 - currentClipOpen) * progress);
+
+                    eyeWhites.forEach(ellipse => {
+                        ellipse.setAttribute('ry', whiteRy.toString());
+                    });
+                    clipEllipses.forEach(ellipse => {
+                        ellipse.setAttribute('ry', clipRy.toString());
+                    });
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animateOpen);
+                    }
+                }
+                requestAnimationFrame(animateOpen);
             }, 100);
 
             // Only schedule next blink if still in AUTONOMOUS mode
@@ -2773,17 +2819,63 @@
             const eyeSet = eyeSets[setIndex];
             if (!eyeSet || !eyeSet.visible) return;
 
-            const eyes = eyeSet.element.querySelectorAll('.eye');
+            const eyeWhites = eyeSet.element.querySelectorAll('.eye-white');
+            const clipEllipses = eyeSet.element.querySelectorAll('.eye-white-clip');
 
-            // Add squint class
-            eyes.forEach(eye => eye.classList.add('squinting'));
+            // Get current ry values (in case animation is in progress)
+            const currentWhiteRy = eyeWhites.length > 0 ? parseFloat(eyeWhites[0].getAttribute('ry')) || 55 : 55;
+            const currentClipRy = clipEllipses.length > 0 ? parseFloat(clipEllipses[0].getAttribute('ry')) || 55 : 55;
+
+            // Animate eye-white and clipPath closing over 100ms
+            const closeStartTime = performance.now();
+            function animateClose(currentTime) {
+                const elapsed = currentTime - closeStartTime;
+                const progress = Math.min(elapsed / 100, 1);
+                const whiteRy = Math.max(27.5, currentWhiteRy - (currentWhiteRy - 27.5) * progress);
+                const clipRy = Math.max(27.5, currentClipRy - (currentClipRy - 27.5) * progress);
+
+                eyeWhites.forEach(ellipse => {
+                    ellipse.setAttribute('ry', whiteRy.toString());
+                });
+                clipEllipses.forEach(ellipse => {
+                    ellipse.setAttribute('ry', clipRy.toString());
+                });
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateClose);
+                }
+            }
+            requestAnimationFrame(animateClose);
 
             if (duration <= 0) {
                 return;
             }
-            // Remove squint class after (squint duration)
+            // Animate back to normal after squint duration
             setTimeout(() => {
-                eyes.forEach(eye => eye.classList.remove('squinting'));
+                // Get current ry values when opening starts
+                const currentWhiteOpen = eyeWhites.length > 0 ? parseFloat(eyeWhites[0].getAttribute('ry')) || 27.5 : 27.5;
+                const currentClipOpen = clipEllipses.length > 0 ? parseFloat(clipEllipses[0].getAttribute('ry')) || 27.5 : 27.5;
+
+                // Animate eye-white and clipPath back to normal over 100ms
+                const openStartTime = performance.now();
+                function animateOpen(currentTime) {
+                    const elapsed = currentTime - openStartTime;
+                    const progress = Math.min(elapsed / 100, 1);
+                    const whiteRy = Math.min(55, currentWhiteOpen + (55 - currentWhiteOpen) * progress);
+                    const clipRy = Math.min(55, currentClipOpen + (55 - currentClipOpen) * progress);
+
+                    eyeWhites.forEach(ellipse => {
+                        ellipse.setAttribute('ry', whiteRy.toString());
+                    });
+                    clipEllipses.forEach(ellipse => {
+                        ellipse.setAttribute('ry', clipRy.toString());
+                    });
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animateOpen);
+                    }
+                }
+                requestAnimationFrame(animateOpen);
             }, duration * 1000);
 
         }
