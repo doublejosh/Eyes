@@ -11,6 +11,11 @@
     },
     {
       "time": 0.0,
+      "action": "furrowBrows",
+      "params": { "angle": 18, "height": 6, "duration": 0.5 }
+    },
+    {
+      "time": 0.0,
       "action": "crossEyes",
       "params": { "intensity": 0.6, "duration": 0.5 }
     },
@@ -34,14 +39,29 @@
       "params": { "direction": "left", "duration": 0.15 }
     },
     {
+      "time": 2.1,
+      "action": "archBrow",
+      "params": { "side": "left", "height": -6, "duration": 0.2 }
+    },
+    {
       "time": 2.5,
       "action": "dart",
       "params": { "direction": "right", "duration": 0.15 }
     },
     {
+      "time": 2.6,
+      "action": "relaxBrows",
+      "params": { "duration": 0.2 }
+    },
+    {
       "time": 3.0,
       "action": "dart",
       "params": { "direction": "up", "duration": 0.15 }
+    },
+    {
+      "time": 3.0,
+      "action": "archBrow",
+      "params": { "side": "right", "height": -10, "duration": 0.3 }
     },
     {
       "time": 3.5,
@@ -56,6 +76,11 @@
       "time": 4.5,
       "action": "fadeColor",
       "params": { "fromColor": "#808080", "toColor": "#A9A9A9", "duration": 0.8 }
+    },
+    {
+      "time": 5.5,
+      "action": "relaxBrows",
+      "params": { "duration": 0.3 }
     },
     {
       "time": 5.5,

@@ -11,6 +11,11 @@
     },
     {
       "time": 0.0,
+      "action": "lowerBrows",
+      "params": { "height": 8, "duration": 1.0 }
+    },
+    {
+      "time": 0.0,
       "action": "moveIris",
       "params": { "x": 0, "y": 5, "duration": 1.0 }
     },
@@ -30,6 +35,11 @@
     {
       "time": 6.0,
       "action": "blink"
+    },
+    {
+      "time": 7.0,
+      "action": "relaxBrows",
+      "params": { "duration": 0.5 }
     },
     {
       "time": 7.0,

@@ -35,6 +35,27 @@
             display: none;
         }
 
+        .eye-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .eyebrow-svg {
+            width: 200px;
+            height: 50px;
+            pointer-events: none;
+            position: absolute;
+            top: -65px;
+            left: 0;
+            z-index: 20;
+            overflow: visible;
+        }
+
+        .eyebrow-left-svg {
+            transform: scaleX(-1);
+        }
+
         .eye {
             width: 200px;
             height: 120px;
@@ -46,8 +67,25 @@
             transform: scaleY(0.1);
         }
 
+        .eye.squinting {
+            transform: scaleY(0.5);
+        }
+
         .iris {
             transition: transform 1.5s ease-out;
+        }
+
+        .eyebrow {
+            transition: transform 0.5s ease-out, fill 1s ease-in-out;
+            transform-origin: center center;
+            pointer-events: none;
+            will-change: transform;
+            isolation: isolate;
+        }
+
+        .eyebrow path {
+            transition: fill 1s ease-in-out;
+            shape-rendering: geometricPrecision;
         }
 
         .instructions {
@@ -317,6 +355,7 @@
         <p><kbd>Esc</kbd> Stop script</p>
         <p><kbd>Q/W</kbd> Scale up/down</p>
         <p><kbd>E/R</kbd> Gap wider/closer</p>
+        <p><kbd>J</kbd> Cycle eyebrow style</p>
         <p><kbd>↑↓←→</kbd> Move position</p>
         <p><kbd>Space</kbd> Help</p>
     </div>
@@ -367,8 +406,12 @@
             container.setAttribute('data-set-id', setId);
 
             container.innerHTML = `
-        <!-- Left Eye -->
-        <svg class="eye" viewBox="0 0 200 120">
+        <!-- Left Eye Container -->
+        <div class="eye-wrapper">
+            
+
+            <!-- Left Eye -->
+            <svg class="eye" viewBox="0 0 200 120">
             <!-- Gradients and filters for realistic iris -->
             <defs>
                 <radialGradient id="irisGradient1-${setId}" cx="0.3" cy="0.3" r="0.7">
@@ -418,6 +461,28 @@
                 <ellipse cx="92" cy="52" rx="1.5" ry="1.5" fill="rgba(255,255,255,0.7)"/>
             </g>
         </svg>
+        <!-- Left Eyebrow -->
+            <svg class="eyebrow-svg eyebrow-left-svg" viewBox="0 0 200 50">
+                <g class="eyebrow eyebrow-left" data-style="medium">
+                    <!-- Thin style (tapered: 6px inner, 12px outer, subtle arch) -->
+                    <path class="brow-style-thin" d="M -1,40 Q 100,32 201,36 L 201,45 Q 100,40 -1,43 Z"
+                          fill="#3d2817" style="display: none;"/>
+                    <!-- Medium style (tapered: 9px inner, 18px outer, subtle arch) (default) -->
+                    <path class="brow-style-medium" d="M -1,35 Q 100,24 201,30 L 201,42 Q 100,35 -1,40 Z"
+                          fill="#3d2817"/>
+                    <!-- Thick style (tapered: 12px inner, 24px outer, subtle arch) -->
+                    <path class="brow-style-thick" d="M -1,36 Q 100,20 201,28 L 201,44 Q 100,34 -1,42 Z"
+                          fill="#3d2817" style="display: none;"/>
+                    <!-- Arched style (tapered: 9px inner, 18px outer, high arch) -->
+                    <path class="brow-style-arched" d="M -1,36 Q 100,10 201,30 L 201,42 Q 100,20 -1,40 Z"
+                          fill="#3d2817" style="display: none;"/>
+                </g>
+            </svg>
+        </div>
+
+        <!-- Right Eye Container -->
+        <div class="eye-wrapper">
+            
 
         <!-- Right Eye -->
         <svg class="eye" viewBox="0 0 200 120">
@@ -470,6 +535,24 @@
                 <ellipse cx="92" cy="52" rx="1.5" ry="1.5" fill="rgba(255,255,255,0.7)"/>
             </g>
         </svg>
+        <!-- Right Eyebrow -->
+            <svg class="eyebrow-svg eyebrow-right-svg" viewBox="0 0 200 50">
+            <g class="eyebrow eyebrow-right" data-style="medium">
+                <!-- Thin style (tapered: 6px inner, 12px outer, subtle arch) -->
+                <path class="brow-style-thin" d="M -1,40 Q 100,32 201,36 L 201,45 Q 100,40 -1,43 Z"
+                      fill="#3d2817" style="display: none;"/>
+                <!-- Medium style (tapered: 9px inner, 18px outer, subtle arch) (default) -->
+                <path class="brow-style-medium" d="M -1,35 Q 100,24 201,30 L 201,42 Q 100,35 -1,40 Z"
+                      fill="#3d2817"/>
+                <!-- Thick style (tapered: 12px inner, 24px outer, subtle arch) -->
+                <path class="brow-style-thick" d="M -1,36 Q 100,20 201,28 L 201,44 Q 100,34 -1,42 Z"
+                      fill="#3d2817" style="display: none;"/>
+                <!-- Arched style (tapered: 9px inner, 18px outer, high arch) -->
+                <path class="brow-style-arched" d="M -1,36 Q 100,10 201,30 L 201,42 Q 100,20 -1,40 Z"
+                      fill="#3d2817" style="display: none;"/>
+            </g>
+        </svg>
+        </div>
 `;
             return container;
         }
@@ -578,10 +661,18 @@
             blinkTimeoutId: null,
             moveTimeoutId: null,
             dripTimeoutId: null,
+            browMoveTimeoutId: null,
             everShown: false,
             behavior: BehaviorType.AUTONOMOUS,
             currentScript: null,
-            lastBehaviorChange: 0
+            lastBehaviorChange: 0,
+            browStyle: 'medium',
+            browAngle: 0,
+            browHeight: 0,
+            browLeftAngle: null,
+            browRightAngle: null,
+            browLeftHeight: null,
+            browRightHeight: null
         };
 
         // Constants
@@ -794,6 +885,7 @@
 
         // Start executing a script on an eye set
         async function executeScript(setIndex, scriptId, isInteraction = false) {
+            
             const eyeSet = eyeSets[setIndex];
             if (!eyeSet || !eyeSet.visible) return null;
 
@@ -958,6 +1050,28 @@
                 iris.style.transition = `transform ${duration}s ease-out`;
                 iris.style.transform = `translate(${x}px, ${y}px)`;
             });
+
+            // Subtly move eyebrows to follow iris movement
+            const leftBrow = eyeSet.element.querySelector('.eyebrow-left');
+            const rightBrow = eyeSet.element.querySelector('.eyebrow-right');
+            const browXBase = x * 0.15; // 15% of horizontal iris movement
+            const browY = y < 0 ? y * 0.12 : 0; // Only move up (12% of upward movement), not down
+
+            // Left eyebrow has scaleX(-1), so we need to negate the X movement
+            if (leftBrow) {
+                const currentTransform = leftBrow.style.transform || '';
+                const otherTransforms = currentTransform.replace(/translate\([^)]+\)/, '').trim();
+                leftBrow.style.transition = `transform ${duration}s ease-out`;
+                leftBrow.style.transform = `translate(${-browXBase}px, ${browY}px) ${otherTransforms}`.trim();
+            }
+
+            // Right eyebrow is normal
+            if (rightBrow) {
+                const currentTransform = rightBrow.style.transform || '';
+                const otherTransforms = currentTransform.replace(/translate\([^)]+\)/, '').trim();
+                rightBrow.style.transition = `transform ${duration}s ease-out`;
+                rightBrow.style.transform = `translate(${browXBase}px, ${browY}px) ${otherTransforms}`.trim();
+            }
         }
 
         // Set scale with animation
@@ -1120,9 +1234,7 @@
 
         // Squint eyes
         function actionSquint(setIndex, params) {
-            const { intensity = 0.5, duration = 0.3 } = params;
-            const scaleDecrease = 1 - (intensity * 0.3); // Down to 0.7x scale
-            actionSetScale(setIndex, { scale: scaleDecrease, duration });
+            squintEyeSet(setIndex, params.duration);
         }
 
         // Look at specific screen coordinates
@@ -1210,6 +1322,23 @@
             }
         }
 
+        // Helper function to darken a color for eyebrows (makes it 30% darker and more saturated)
+        function darkenColorForBrows(color) {
+            // Parse hex color
+            const hex = color.replace('#', '');
+            let r = parseInt(hex.substring(0, 2), 16);
+            let g = parseInt(hex.substring(2, 4), 16);
+            let b = parseInt(hex.substring(4, 6), 16);
+
+            // Darken by 30%
+            r = Math.floor(r * 0.7);
+            g = Math.floor(g * 0.7);
+            b = Math.floor(b * 0.7);
+
+            // Convert back to hex
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        }
+
         // Set iris color
         function actionSetColor(setIndex, params) {
             const eyeSet = eyeSets[setIndex];
@@ -1217,11 +1346,20 @@
 
             const { color } = params;
 
-            // Pause color animations
+            // Pause color animations and set color for iris
             const irisMainElements = eyeSet.element.querySelectorAll('.iris-main');
             irisMainElements.forEach(elem => {
                 elem.style.animation = 'none';
                 elem.style.fill = color;
+            });
+
+            // Synchronize eyebrow color with iris (darker version, only visible paths)
+            const browColor = darkenColorForBrows(color);
+            const eyebrowPaths = eyeSet.element.querySelectorAll('.eyebrow path');
+            eyebrowPaths.forEach(path => {
+                if (path.style.display !== 'none') {
+                    path.style.fill = browColor;
+                }
             });
         }
 
@@ -1232,7 +1370,7 @@
 
             const { fromColor, toColor, duration = 1.0 } = params;
 
-            // Use CSS transition for color fade
+            // Use CSS transition for color fade on iris
             const irisMainElements = eyeSet.element.querySelectorAll('.iris-main');
             irisMainElements.forEach(elem => {
                 elem.style.animation = 'none';
@@ -1243,6 +1381,22 @@
                 setTimeout(() => {
                     elem.style.fill = toColor;
                 }, 10);
+            });
+
+            // Synchronize eyebrow color fade with iris (darker version, only visible paths)
+            const browFromColor = darkenColorForBrows(fromColor);
+            const browToColor = darkenColorForBrows(toColor);
+            const eyebrowPaths = eyeSet.element.querySelectorAll('.eyebrow path');
+            eyebrowPaths.forEach(path => {
+                if (path.style.display !== 'none') {
+                    path.style.fill = browFromColor;
+                    path.style.transition = `fill ${duration}s ease-in-out`;
+
+                    // Trigger fade
+                    setTimeout(() => {
+                        path.style.fill = browToColor;
+                    }, 10);
+                }
             });
         }
 
@@ -1302,6 +1456,270 @@
             eyeSet.orbitAnimationId = requestAnimationFrame(updateOrbit);
         }
 
+        // ============================================================
+        // EYEBROW ACTION FUNCTIONS
+        // ============================================================
+
+        // Raise eyebrows (surprise, curious)
+        function actionRaiseBrows(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { height = -10, duration = 0.3 } = params;
+
+            const eyebrows = eyeSet.element.querySelectorAll('.eyebrow');
+            eyebrows.forEach(brow => {
+                brow.style.transition = `transform ${duration}s ease-out`;
+                brow.style.transform = `translateY(${height}px)`;
+            });
+
+            // Update state
+            eyeSet.browHeight = height;
+            eyeSet.browLeftHeight = null;
+            eyeSet.browRightHeight = null;
+        }
+
+        // Lower eyebrows (sad, sleepy)
+        function actionLowerBrows(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { height = 10, duration = 0.3 } = params;
+
+            const eyebrows = eyeSet.element.querySelectorAll('.eyebrow');
+            eyebrows.forEach(brow => {
+                brow.style.transition = `transform ${duration}s ease-out`;
+                brow.style.transform = `translateY(${height}px)`;
+            });
+
+            // Update state
+            eyeSet.browHeight = height;
+            eyeSet.browLeftHeight = null;
+            eyeSet.browRightHeight = null;
+        }
+
+        // Furrow eyebrows (angry, confused)
+        function actionFurrowBrows(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { angle = 15, height = 5, duration = 0.4 } = params;
+
+            const leftBrow = eyeSet.element.querySelector('.eyebrow-left');
+            const rightBrow = eyeSet.element.querySelector('.eyebrow-right');
+
+            // Left eyebrow: with scaleX(-1), positive rotation creates the furrowed look
+            if (leftBrow) {
+                leftBrow.style.transition = `transform ${duration}s ease-out`;
+                leftBrow.style.transform = `translateY(${height}px) rotate(${-angle}deg)`;
+            }
+
+            // Right eyebrow: negative rotation angles it down toward nose, up toward temple
+            if (rightBrow) {
+                rightBrow.style.transition = `transform ${duration}s ease-out`;
+                rightBrow.style.transform = `translateY(${height}px) rotate(${-angle}deg)`;
+            }
+
+            // Update state
+            eyeSet.browHeight = height;
+            eyeSet.browLeftAngle = angle;
+            eyeSet.browRightAngle = -angle;
+            eyeSet.browLeftHeight = null;
+            eyeSet.browRightHeight = null;
+        }
+
+        // Relax eyebrows (return to neutral)
+        function actionRelaxBrows(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { duration = 0.5 } = params;
+
+            const eyebrows = eyeSet.element.querySelectorAll('.eyebrow');
+            eyebrows.forEach(brow => {
+                brow.style.transition = `transform ${duration}s ease-out`;
+                brow.style.transform = 'translateY(0px) rotate(0deg)';
+            });
+
+            // Update state
+            eyeSet.browAngle = 0;
+            eyeSet.browHeight = 0;
+            eyeSet.browLeftAngle = null;
+            eyeSet.browRightAngle = null;
+            eyeSet.browLeftHeight = null;
+            eyeSet.browRightHeight = null;
+        }
+
+        // Arch single eyebrow (skeptical, questioning)
+        function actionArchBrow(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { side = 'right', height = -12, duration = 0.3 } = params;
+
+            const leftBrow = eyeSet.element.querySelector('.eyebrow-left');
+            const rightBrow = eyeSet.element.querySelector('.eyebrow-right');
+
+            if (side === 'left') {
+                if (leftBrow) {
+                    leftBrow.style.transition = `transform ${duration}s ease-out`;
+                    leftBrow.style.transform = `translateY(${height}px)`;
+                }
+                if (rightBrow) {
+                    rightBrow.style.transition = `transform ${duration}s ease-out`;
+                    rightBrow.style.transform = 'translateY(0px)';
+                }
+                eyeSet.browLeftHeight = height;
+                eyeSet.browRightHeight = 0;
+            } else {
+                if (rightBrow) {
+                    rightBrow.style.transition = `transform ${duration}s ease-out`;
+                    rightBrow.style.transform = `translateY(${height}px)`;
+                }
+                if (leftBrow) {
+                    leftBrow.style.transition = `transform ${duration}s ease-out`;
+                    leftBrow.style.transform = 'translateY(0px)';
+                }
+                eyeSet.browRightHeight = height;
+                eyeSet.browLeftHeight = 0;
+            }
+        }
+
+        // Set eyebrow style
+        function actionSetBrowStyle(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            let { style = 'medium' } = params;
+            const validStyles = ['thin', 'medium', 'thick', 'arched'];
+
+            // Fallback to medium if invalid style (e.g., old 'flat' style from saved state)
+            if (!validStyles.includes(style)) {
+                style = 'medium';
+            }
+
+            const eyebrows = eyeSet.element.querySelectorAll('.eyebrow');
+            eyebrows.forEach(brow => {
+                // Hide all styles
+                const paths = brow.querySelectorAll('path');
+                paths.forEach(path => {
+                    path.style.display = 'none';
+                });
+
+                // Show selected style
+                const selectedPath = brow.querySelector(`.brow-style-${style}`);
+                if (selectedPath) {
+                    selectedPath.style.display = 'block';
+                }
+
+                // Update data attribute
+                brow.setAttribute('data-style', style);
+            });
+
+            // Update state
+            eyeSet.browStyle = style;
+        }
+
+        // Generic eyebrow movement (symmetric or asymmetric)
+        function actionMoveBrow(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const {
+                height = 0,
+                angle = 0,
+                duration = 0.5,
+                leftHeight = null,
+                rightHeight = null,
+                leftAngle = null,
+                rightAngle = null
+            } = params;
+
+            const leftBrow = eyeSet.element.querySelector('.eyebrow-left');
+            const rightBrow = eyeSet.element.querySelector('.eyebrow-right');
+
+            // Determine if asymmetric
+            const isAsymmetric = leftHeight !== null || rightHeight !== null || leftAngle !== null || rightAngle !== null;
+
+            if (isAsymmetric) {
+                const lHeight = leftHeight !== null ? leftHeight : height;
+                const rHeight = rightHeight !== null ? rightHeight : height;
+                const lAngle = leftAngle !== null ? leftAngle : angle;
+                const rAngle = rightAngle !== null ? rightAngle : angle;
+
+                if (leftBrow) {
+                    leftBrow.style.transition = `transform ${duration}s ease-out`;
+                    leftBrow.style.transform = `translateY(${lHeight}px) rotate(${lAngle}deg)`;
+                }
+                if (rightBrow) {
+                    rightBrow.style.transition = `transform ${duration}s ease-out`;
+                    rightBrow.style.transform = `translateY(${rHeight}px) rotate(${rAngle}deg)`;
+                }
+
+                eyeSet.browLeftHeight = lHeight;
+                eyeSet.browRightHeight = rHeight;
+                eyeSet.browLeftAngle = lAngle;
+                eyeSet.browRightAngle = rAngle;
+            } else {
+                const eyebrows = eyeSet.element.querySelectorAll('.eyebrow');
+                eyebrows.forEach(brow => {
+                    brow.style.transition = `transform ${duration}s ease-out`;
+                    brow.style.transform = `translateY(${height}px) rotate(${angle}deg)`;
+                });
+
+                eyeSet.browHeight = height;
+                eyeSet.browAngle = angle;
+                eyeSet.browLeftHeight = null;
+                eyeSet.browRightHeight = null;
+                eyeSet.browLeftAngle = null;
+                eyeSet.browRightAngle = null;
+            }
+        }
+
+        // Wiggle eyebrows (rapid alternating movement)
+        function actionWiggleBrows(setIndex, params) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet) return;
+
+            const { intensity = 0.5, duration = 1.0, frequency = 4 } = params;
+
+            const leftBrow = eyeSet.element.querySelector('.eyebrow-left');
+            const rightBrow = eyeSet.element.querySelector('.eyebrow-right');
+
+            const wiggleHeight = intensity * 8; // Scale intensity to pixels
+            const cycleDuration = duration / frequency; // Time for one up-down cycle
+            const halfCycle = cycleDuration / 2;
+
+            let wiggleCount = 0;
+            const maxWiggles = frequency * 2; // Up and down movements
+
+            function wiggle() {
+                if (wiggleCount >= maxWiggles) {
+                    // Reset to neutral
+                    if (leftBrow) leftBrow.style.transform = 'translateY(0px)';
+                    if (rightBrow) rightBrow.style.transform = 'translateY(0px)';
+                    return;
+                }
+
+                const isUp = wiggleCount % 2 === 0;
+                const offset = isUp ? -wiggleHeight : wiggleHeight;
+
+                if (leftBrow) {
+                    leftBrow.style.transition = `transform ${halfCycle}s linear`;
+                    leftBrow.style.transform = `translateY(${offset}px)`;
+                }
+                if (rightBrow) {
+                    rightBrow.style.transition = `transform ${halfCycle}s linear`;
+                    rightBrow.style.transform = `translateY(${offset}px)`;
+                }
+
+                wiggleCount++;
+                setTimeout(wiggle, halfCycle * 1000);
+            }
+
+            wiggle();
+        }
+
         // Populate action registry with advanced actions
         actionRegistry['crossEyes'] = actionCrossEyes;
         actionRegistry['uncrossEyes'] = actionUncrossEyes;
@@ -1316,6 +1734,14 @@
         actionRegistry['setColor'] = actionSetColor;
         actionRegistry['fadeColor'] = actionFadeColor;
         actionRegistry['orbitIris'] = actionOrbitIris;
+        actionRegistry['raiseBrows'] = actionRaiseBrows;
+        actionRegistry['lowerBrows'] = actionLowerBrows;
+        actionRegistry['furrowBrows'] = actionFurrowBrows;
+        actionRegistry['relaxBrows'] = actionRelaxBrows;
+        actionRegistry['archBrow'] = actionArchBrow;
+        actionRegistry['setBrowStyle'] = actionSetBrowStyle;
+        actionRegistry['moveBrow'] = actionMoveBrow;
+        actionRegistry['wiggleBrows'] = actionWiggleBrows;
 
         // ============================================================
         // PHASE 5: BEHAVIOR MANAGEMENT
@@ -1399,6 +1825,8 @@
         function cycleScript(setIndex) {
             const eyeSet = eyeSets[setIndex];
             if (!eyeSet) return;
+
+            
 
             const scriptIds = Array.from(scriptExecutionState.loadedScripts.keys());
             if (scriptIds.length === 0) return;
@@ -2340,6 +2768,26 @@
             }
         }
 
+        // Per-set squinting function
+        function squintEyeSet(setIndex, duration) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet || !eyeSet.visible) return;
+
+            const eyes = eyeSet.element.querySelectorAll('.eye');
+
+            // Add squint class
+            eyes.forEach(eye => eye.classList.add('squinting'));
+
+            if (duration <= 0) {
+                return;
+            }
+            // Remove squint class after (squint duration)
+            setTimeout(() => {
+                eyes.forEach(eye => eye.classList.remove('squinting'));
+            }, duration * 1000);
+
+        }
+
         // Per-set iris movement function
         function moveEyeSetIris(setIndex) {
             const eyeSet = eyeSets[setIndex];
@@ -2358,10 +2806,95 @@
                 iris.style.transform = `translate(${randomX}px, ${randomY}px)`;
             });
 
+            // Subtly move eyebrows to follow iris movement
+            const leftBrow = eyeSet.element.querySelector('.eyebrow-left');
+            const rightBrow = eyeSet.element.querySelector('.eyebrow-right');
+            const browXBase = randomX * 0.15; // 15% of horizontal iris movement
+            const browY = randomY < 0 ? randomY * 0.12 : 0; // Only move up (12% of upward movement)
+
+            // Left eyebrow has scaleX(-1), so we need to negate the X movement
+            if (leftBrow) {
+                const currentTransform = leftBrow.style.transform || '';
+                const otherTransforms = currentTransform.replace(/translate\([^)]+\)/, '').trim();
+                leftBrow.style.transform = `translate(${-browXBase}px, ${browY}px) ${otherTransforms}`.trim();
+            }
+
+            // Right eyebrow is normal
+            if (rightBrow) {
+                const currentTransform = rightBrow.style.transform || '';
+                const otherTransforms = currentTransform.replace(/translate\([^)]+\)/, '').trim();
+                rightBrow.style.transform = `translate(${browXBase}px, ${browY}px) ${otherTransforms}`.trim();
+            }
+
             // Only schedule next movement if still in AUTONOMOUS mode
             if (eyeSet.behavior === BehaviorType.AUTONOMOUS) {
                 const nextMoveDelay = Math.random() * 5000 + 1000; // 1000ms to 5000ms
                 eyeSet.moveTimeoutId = setTimeout(() => moveEyeSetIris(setIndex), nextMoveDelay);
+            }
+        }
+
+        // Per-set eyebrow movement function (autonomous subtle movements)
+        function moveEyeSetBrows(setIndex) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet || !eyeSet.visible) return;
+
+            const eyebrows = eyeSet.element.querySelectorAll('.eyebrow');
+
+            // Generate subtle random movement
+            const maxHeight = 5; // Maximum vertical movement (much less than iris)
+            const maxAngle = 3; // Maximum rotation angle
+            const randomHeight = (Math.random() - 0.5) * 2 * maxHeight; // -5 to 5
+            const randomAngle = (Math.random() - 0.5) * 2 * maxAngle; // -3 to 3
+
+            // Apply subtle movement to eyebrows
+            eyebrows.forEach(brow => {
+                brow.style.transition = 'transform 2s ease-out';
+                brow.style.transform = `translateY(${randomHeight}px) rotate(${randomAngle}deg)`;
+            });
+
+            // Only schedule next movement if still in AUTONOMOUS mode
+            if (eyeSet.behavior === BehaviorType.AUTONOMOUS) {
+                const nextMoveDelay = Math.random() * 25000 + 15000; // 15000ms to 40000ms (much less frequent than iris)
+                eyeSet.browMoveTimeoutId = setTimeout(() => moveEyeSetBrows(setIndex), nextMoveDelay);
+            }
+        }
+
+        // Synchronize eyebrow color with current iris color (darkened)
+        function syncEyebrowColor(setIndex) {
+            const eyeSet = eyeSets[setIndex];
+            if (!eyeSet || !eyeSet.visible) return;
+
+            // Get current computed color from iris
+            const irisMain = eyeSet.element.querySelector('.iris-main');
+            if (!irisMain) return;
+
+            const computedStyle = window.getComputedStyle(irisMain);
+            const currentColor = computedStyle.fill;
+
+            // Convert RGB to hex if needed
+            let hexColor = currentColor;
+            if (currentColor.startsWith('rgb')) {
+                const match = currentColor.match(/\d+/g);
+                if (match && match.length >= 3) {
+                    const r = parseInt(match[0]);
+                    const g = parseInt(match[1]);
+                    const b = parseInt(match[2]);
+                    hexColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                }
+            }
+
+            // Apply darkened color to visible eyebrow paths
+            const browColor = darkenColorForBrows(hexColor);
+            const eyebrowPaths = eyeSet.element.querySelectorAll('.eyebrow path');
+            eyebrowPaths.forEach(path => {
+                if (path.style.display !== 'none') {
+                    path.style.fill = browColor;
+                }
+            });
+
+            // Continue syncing every 100ms if still visible and in autonomous mode
+            if (eyeSet.visible && eyeSet.behavior === BehaviorType.AUTONOMOUS) {
+                setTimeout(() => syncEyebrowColor(setIndex), 100);
             }
         }
 
@@ -2413,6 +2946,13 @@
             const initialMoveDelay = Math.random() * 1500 + 500;
             eyeSet.moveTimeoutId = setTimeout(() => moveEyeSetIris(setIndex), initialMoveDelay);
 
+            // Start eyebrow movement with initial random delay (15-30 seconds)
+            const initialBrowMoveDelay = Math.random() * 15000 + 15000;
+            eyeSet.browMoveTimeoutId = setTimeout(() => moveEyeSetBrows(setIndex), initialBrowMoveDelay);
+
+            // Start eyebrow color synchronization (updates every 100ms to match iris color)
+            syncEyebrowColor(setIndex);
+
             // Start dripping with initial random delay (1-3 seconds)
             const initialDripDelay = Math.random() * 2000 + 1000;
             eyeSet.dripTimeoutId = setTimeout(() => dripEyeSet(setIndex), initialDripDelay);
@@ -2431,6 +2971,10 @@
             if (eyeSet.moveTimeoutId) {
                 clearTimeout(eyeSet.moveTimeoutId);
                 eyeSet.moveTimeoutId = null;
+            }
+            if (eyeSet.browMoveTimeoutId) {
+                clearTimeout(eyeSet.browMoveTimeoutId);
+                eyeSet.browMoveTimeoutId = null;
             }
             if (eyeSet.dripTimeoutId) {
                 clearTimeout(eyeSet.dripTimeoutId);
@@ -2512,6 +3056,10 @@
             };
 
             document.getElementById('eyes-stage').appendChild(container);
+
+            // Initialize eyebrow style to ensure it's visible
+            actionSetBrowStyle(setIndex, { style: 'medium' });
+
             return eyeSets[setIndex];
         }
 
@@ -2548,7 +3096,14 @@
                             posY: eyeSet.posY,
                             visible: eyeSet.visible,
                             everShown: eyeSet.everShown,
-                            behavior: eyeSet.behavior || BehaviorType.AUTONOMOUS
+                            behavior: eyeSet.behavior || BehaviorType.AUTONOMOUS,
+                            browStyle: eyeSet.browStyle || 'medium',
+                            browAngle: eyeSet.browAngle || 0,
+                            browHeight: eyeSet.browHeight || 0,
+                            browLeftAngle: eyeSet.browLeftAngle,
+                            browRightAngle: eyeSet.browRightAngle,
+                            browLeftHeight: eyeSet.browLeftHeight,
+                            browRightHeight: eyeSet.browRightHeight
                         };
                     } else {
                         state.eyeSets[i] = null;
@@ -2781,6 +3336,18 @@
                 updateEyeSetTransform(activeSetIndex);
                 debouncedSaveState();
             }
+            // J for eyebrow style cycling
+            else if (key === 'j') {
+                event.preventDefault();
+                const styles = ['thin', 'medium', 'thick', 'arched'];
+                const currentStyle = eyeSet.browStyle || 'medium';
+                const currentIndex = styles.indexOf(currentStyle);
+                const nextStyle = styles[(currentIndex + 1) % styles.length];
+
+                actionSetBrowStyle(activeSetIndex, { style: nextStyle });
+                console.log(`Eyebrow style changed to: ${nextStyle}`);
+                debouncedSaveState();
+            }
         });
 
         // Keyup listener to clear arrow key hold state
@@ -2942,6 +3509,39 @@
                         eyeSet.visible = savedSet.visible;
                         eyeSet.everShown = savedSet.everShown;
                         eyeSet.behavior = savedSet.behavior || BehaviorType.AUTONOMOUS;
+                        eyeSet.browStyle = savedSet.browStyle || 'medium';
+                        eyeSet.browAngle = savedSet.browAngle || 0;
+                        eyeSet.browHeight = savedSet.browHeight || 0;
+                        eyeSet.browLeftAngle = savedSet.browLeftAngle;
+                        eyeSet.browRightAngle = savedSet.browRightAngle;
+                        eyeSet.browLeftHeight = savedSet.browLeftHeight;
+                        eyeSet.browRightHeight = savedSet.browRightHeight;
+
+                        // Restore eyebrow visual state (defaults to 'medium' if not saved)
+                        actionSetBrowStyle(i, { style: savedSet.browStyle || 'medium' });
+
+                        // Restore eyebrow transforms if they exist
+                        const leftBrow = eyeSet.element.querySelector('.eyebrow-left');
+                        const rightBrow = eyeSet.element.querySelector('.eyebrow-right');
+
+                        if (savedSet.browLeftAngle !== null && savedSet.browLeftAngle !== undefined &&
+                            savedSet.browLeftHeight !== null && savedSet.browLeftHeight !== undefined) {
+                            // Individual brow transforms
+                            if (leftBrow) {
+                                leftBrow.style.transform = `translateY(${savedSet.browLeftHeight}px) rotate(${savedSet.browLeftAngle}deg)`;
+                            }
+                            if (rightBrow) {
+                                rightBrow.style.transform = `translateY(${savedSet.browRightHeight}px) rotate(${savedSet.browRightAngle}deg)`;
+                            }
+                        } else if (savedSet.browAngle !== 0 || savedSet.browHeight !== 0) {
+                            // Symmetric brow transforms
+                            if (leftBrow) {
+                                leftBrow.style.transform = `translateY(${savedSet.browHeight}px) rotate(${savedSet.browAngle}deg)`;
+                            }
+                            if (rightBrow) {
+                                rightBrow.style.transform = `translateY(${savedSet.browHeight}px) rotate(${savedSet.browAngle}deg)`;
+                            }
+                        }
 
                         // If this set was visible, show it
                         if (savedSet.visible) {

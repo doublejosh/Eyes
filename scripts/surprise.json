@@ -11,13 +11,13 @@
     },
     {
       "time": 0.1,
-      "action": "setScale",
-      "params": { "scale": 1.5, "duration": 0.3 }
+      "action": "raiseBrows",
+      "params": { "height": -30, "duration": 0.2 }
     },
     {
       "time": 0.1,
-      "action": "setGap",
-      "params": { "gap": 25, "duration": 0.3 }
+      "action": "setScale",
+      "params": { "scale": 1.2, "duration": 0.3 }
     },
     {
       "time": 0.2,
@@ -32,6 +32,11 @@
       "time": 1.0,
       "action": "fadeColor",
       "params": { "fromColor": "#FFD700", "toColor": "#FFA500", "duration": 1.5 }
+    },
+    {
+      "time": 2.5,
+      "action": "relaxBrows",
+      "params": { "duration": 0.5 }
     },
     {
       "time": 2.5,

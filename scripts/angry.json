@@ -11,6 +11,11 @@
     },
     {
       "time": 0.0,
+      "action": "furrowBrows",
+      "params": { "angle": 25, "height": 10, "duration": 0.3 }
+    },
+    {
+      "time": 0.0,
       "action": "squint",
       "params": { "intensity": 0.5, "duration": 0.3 }
     },
@@ -35,8 +40,23 @@
       "params": { "intensity": 0.4, "duration": 0.5, "frequency": 8 }
     },
     {
+      "time": 2.0,
+      "action": "furrowBrows",
+      "params": { "angle": 30, "height": 12, "duration": 0.3 }
+    },
+    {
+      "time": 3.0,
+      "action": "furrowBrows",
+      "params": { "angle": 25, "height": 10, "duration": 0.3 }
+    },
+    {
       "time": 3.5,
       "action": "blink"
+    },
+    {
+      "time": 4.5,
+      "action": "relaxBrows",
+      "params": { "duration": 0.3 }
     },
     {
       "time": 4.5,
