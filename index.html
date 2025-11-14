@@ -324,6 +324,7 @@
         }
 
     </style>
+    <link rel="stylesheet" href="styles/ui.css">
 </head>
 <body>
     <div id="eyes-stage"></div>
@@ -1000,8 +1001,11 @@
             eyeSet.behavior = BehaviorType.AUTONOMOUS;
             eyeSet.lastBehaviorChange = Date.now();
 
-            // Start fresh autonomous animations
-            startEyeSetAnimations(setIndex);
+            // Only start animations if not in test mode
+            // In test mode, eyes should sit still after script completion
+            if (!window.testModeActive) {
+                startEyeSetAnimations(setIndex);
+            }
         }
 
         // Stop script execution (manual interrupt)
@@ -1775,18 +1779,22 @@
             eyeSet.behavior = behavior;
             eyeSet.lastBehaviorChange = Date.now();
 
-            switch (behavior) {
-                case BehaviorType.AUTONOMOUS:
-                    startEyeSetAnimations(setIndex);
-                    break;
+            // Only start behaviors if not in test mode
+            // In test mode, only scripts from test mode should run
+            if (!window.testModeActive || behavior === BehaviorType.SCRIPTED) {
+                switch (behavior) {
+                    case BehaviorType.AUTONOMOUS:
+                        startEyeSetAnimations(setIndex);
+                        break;
 
-                case BehaviorType.TRACKING:
-                    startEyeSetTracking(setIndex);
-                    break;
+                    case BehaviorType.TRACKING:
+                        startEyeSetTracking(setIndex);
+                        break;
 
-                case BehaviorType.SCRIPTED:
-                    // Scripts started via executeScript()
-                    break;
+                    case BehaviorType.SCRIPTED:
+                        // Scripts started via executeScript()
+                        break;
+                }
             }
 
             debouncedSaveState();
@@ -2050,6 +2058,12 @@
         // Main director evaluation loop
         function evaluateDirector() {
             if (!directorState.enabled) return;
+            
+            // Don't run director if test mode is active
+            if (window.testModeActive) {
+                scheduleDirectorEvaluation();
+                return;
+            }
 
             const now = Date.now();
 
@@ -3277,10 +3291,14 @@
             // D key - toggle director on/off
             if (key === 'd') {
                 event.preventDefault();
-                if (directorState.enabled) {
-                    stopDirector();
+                if (window.toggleDirector) {
+                    window.toggleDirector();
                 } else {
-                    startDirector(directorState.mode);
+                    if (directorState.enabled) {
+                        stopDirector();
+                    } else {
+                        startDirector(directorState.mode);
+                    }
                 }
                 return;
             }
@@ -3664,7 +3682,168 @@
                 // No saved state - start in spider mode by default
                 toggleSpiderMode();
             }
+
+            // Initialize UI modules
+            initializeUIModules();
         });
+
+        // Initialize UI modules (toast, debug panel, test mode)
+        async function initializeUIModules() {
+            try {
+                // Import UI modules
+                const { toast } = await import('./js/ui/toast.js');
+                const { debugPanel } = await import('./js/ui/debug-panel.js');
+                const { testMode } = await import('./js/ui/test-mode.js');
+
+                // Make toast available globally for mode changes
+                window.toast = toast;
+
+                // Set executeScript function for test mode
+                testMode.setExecuteScriptFn(executeScript);
+
+                // Add keyboard shortcuts for debug panel and test mode
+                document.addEventListener('keydown', (event) => {
+                    // F3 - Toggle debug panel
+                    if (event.key === 'F3') {
+                        event.preventDefault();
+                        debugPanel.toggle();
+                        return;
+                    }
+
+                    // F4 or Tab - Toggle test mode
+                    if (event.key === 'F4' || (event.key === 'Tab' && event.shiftKey)) {
+                        event.preventDefault();
+                        testMode.toggle();
+                        return;
+                    }
+                });
+
+                // Add toast notifications to mode changes
+                const originalToggleSpiderMode = toggleSpiderMode;
+                window.toggleSpiderMode = function() {
+                    originalToggleSpiderMode();
+                    // Update window reference and show toast
+                    window.isSpiderModeActive = isSpiderModeActive;
+                    setTimeout(() => {
+                        if (isSpiderModeActive) {
+                            toast.modeChange('Spider Mode: ON');
+                        } else {
+                            toast.modeChange('Spider Mode: OFF');
+                        }
+                    }, 10);
+                };
+
+                window.toggleDirector = () => {
+                    if (directorState.enabled) {
+                        stopDirector();
+                        toast.modeChange('Director: Disabled');
+                    } else {
+                        startDirector(directorState.mode);
+                        toast.modeChange(`Director: Enabled (${directorState.mode} mode)`);
+                    }
+                };
+
+                const originalSetDirectorMode = setDirectorMode;
+                window.setDirectorMode = function(mode) {
+                    originalSetDirectorMode(mode);
+                    setTimeout(() => {
+                        if (window.directorState && window.directorState.enabled) {
+                            toast.modeChange(`Director Mode: ${mode}`);
+                        }
+                    }, 10);
+                };
+
+                const originalSetEyeBehavior = setEyeBehavior;
+                window.setEyeBehavior = function(setIndex, behavior) {
+                    originalSetEyeBehavior(setIndex, behavior);
+                    const behaviorNames = {
+                        'autonomous': 'Autonomous',
+                        'tracking': 'Tracking',
+                        'scripted': 'Scripted'
+                    };
+                    toast.behaviorChange(`Eyeset ${setIndex}: ${behaviorNames[behavior] || behavior}`);
+                };
+
+                const originalExecuteScript = executeScript;
+                window.executeScript = async function(setIndex, scriptId, isInteraction) {
+                    const instance = await originalExecuteScript(setIndex, scriptId, isInteraction);
+                    if (instance && !isInteraction) {
+                        const scriptExecutionState = window.scriptExecutionState;
+                        if (scriptExecutionState) {
+                            const script = scriptExecutionState.loadedScripts.get(scriptId);
+                            if (script) {
+                                toast.scriptExecution(`Started: ${script.name} on Eyeset ${setIndex}`);
+                            }
+                        }
+                    }
+                    return instance;
+                };
+
+                const originalCompleteScript = completeScript;
+                window.completeScript = function(setIndex) {
+                    const eyeSets = window.eyeSets || [];
+                    const eyeSet = eyeSets[setIndex];
+                    if (eyeSet && eyeSet.currentScript) {
+                        const scriptName = eyeSet.currentScript.scriptObject.name;
+                        originalCompleteScript(setIndex);
+                        toast.scriptExecution(`Completed: ${scriptName} on Eyeset ${setIndex}`);
+                    } else {
+                        originalCompleteScript(setIndex);
+                    }
+                };
+
+                // Add keyboard shortcut to cycle notification presets
+                document.addEventListener('keydown', (event) => {
+                    // N key - cycle through notification presets (All off -> Mode only -> Mode + Behavior -> All on)
+                    if (event.key.toLowerCase() === 'n' && !event.target.matches('input, select, textarea')) {
+                        const preset = toast.cycleNotificationPreset();
+                        const presetName = toast.getNotificationPresetName();
+                        // Show notification about preset change (always show, even if notifications are off)
+                        if (window.toast) {
+                            window.toast.show(`Notifications: ${presetName}`, 'info', 2000);
+                        }
+                        event.preventDefault();
+                    }
+                });
+
+                // Override existing keyboard handlers to use new functions
+                const keydownHandler = document.querySelector('script').onkeydown || null;
+                
+                // Update instructions to include new shortcuts
+                const instructions = document.getElementById('instructions');
+                if (instructions) {
+                    const newControls = `
+                        <p><kbd>F3</kbd> Toggle debug view</p>
+                        <p><kbd>F4</kbd> Toggle test mode</p>
+                        <p><kbd>N</kbd> Cycle notification presets (All off → Mode → Mode+Behavior → All)</p>
+                    `;
+                    instructions.innerHTML += newControls;
+                }
+
+                console.log('UI modules initialized');
+            } catch (error) {
+                console.error('Failed to initialize UI modules:', error);
+            }
+        }
+
+        // Expose functions globally for UI modules
+        window.toggleSpiderMode = toggleSpiderMode;
+        window.setEyeBehavior = setEyeBehavior;
+        window.setDirectorMode = setDirectorMode;
+        window.executeScript = executeScript;
+        window.completeScript = completeScript;
+        window.stopDirector = stopDirector;
+        window.startDirector = startDirector;
+        window.debouncedSaveState = debouncedSaveState;
+        window.eyeSets = eyeSets;
+        window.scriptExecutionState = scriptExecutionState;
+        window.directorState = directorState;
+        window.BehaviorType = BehaviorType;
+        window.isSpiderModeActive = isSpiderModeActive;
+        window.testModeActive = false; // Will be set by test mode
+        window.stopScript = stopScript;
+        window.stopEyeSetAnimations = stopEyeSetAnimations;
+        window.stopEyeSetTracking = stopEyeSetTracking;
     </script>
 </body>
 </html>
