@@ -66,7 +66,8 @@
         /* Removed CSS-based eye-white scaling - now handled via JavaScript ry animation */
 
         .iris {
-            transition: transform 1.5s ease-out;
+            transition: transform 1.5s ease-out; 
+            overflow: hidden;
         }
 
         .eyebrow {
@@ -440,23 +441,27 @@
 
             <!-- Green iris -->
             <g class="iris" mask="url(#eyeWhiteMask-${setId})">
-                <!-- Base iris with color-changing gradient -->
-                <ellipse class="iris-main" cx="100" cy="60" rx="35" ry="35" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
-                <!-- Overlapping gradient clouds for texture -->
-                <ellipse cx="95" cy="55" rx="28" ry="28" fill="url(#irisGradient1-${setId})" filter="url(#irisBlur-${setId})"/>
-                <ellipse cx="105" cy="58" rx="25" ry="25" fill="url(#irisGradient2-${setId})" filter="url(#irisBlur-${setId})"/>
-                <ellipse cx="100" cy="65" rx="22" ry="22" fill="url(#irisGradient3-${setId})" filter="url(#irisBlur2-${setId})"/>
-                <!-- Additional texture layers -->
-                <ellipse cx="92" cy="62" rx="15" ry="15" fill="url(#irisGradient1-${setId})" filter="url(#irisBlur2-${setId})" opacity="0.4"/>
-                <ellipse cx="108" cy="55" rx="18" ry="18" fill="url(#irisGradient2-${setId})" filter="url(#irisBlur-${setId})" opacity="0.5"/>
+                <g class="iris-content">
+                    <!-- Base iris with color-changing gradient -->
+                    <ellipse class="iris-main" cx="100" cy="60" rx="35" ry="35" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
+                    <!-- Overlapping gradient clouds for texture -->
+                    <ellipse cx="95" cy="55" rx="28" ry="28" fill="url(#irisGradient1-${setId})" filter="url(#irisBlur-${setId})"/>
+                    <ellipse cx="105" cy="58" rx="25" ry="25" fill="url(#irisGradient2-${setId})" filter="url(#irisBlur-${setId})"/>
+                    <ellipse cx="100" cy="65" rx="22" ry="22" fill="url(#irisGradient3-${setId})" filter="url(#irisBlur2-${setId})"/>
+                    <!-- Additional texture layers -->
+                    <ellipse cx="92" cy="62" rx="15" ry="15" fill="url(#irisGradient1-${setId})" filter="url(#irisBlur2-${setId})" opacity="0.4"/>
+                    <ellipse cx="108" cy="55" rx="18" ry="18" fill="url(#irisGradient2-${setId})" filter="url(#irisBlur-${setId})" opacity="0.5"/>
+                </g>
             </g>
 
             <!-- Black pupil -->
             <g class="iris" mask="url(#eyeWhiteMask-${setId})">
-                <ellipse cx="100" cy="60" rx="15" ry="15" fill="#000"/>
-                <!-- Lens flare inside pupil -->
-                <ellipse cx="95" cy="55" rx="3" ry="4" fill="rgba(255,255,255,0.9)"/>
-                <ellipse cx="92" cy="52" rx="1.5" ry="1.5" fill="rgba(255,255,255,0.7)"/>
+                <g class="iris-content">
+                    <ellipse cx="100" cy="60" rx="15" ry="15" fill="#000"/>
+                    <!-- Lens flare inside pupil -->
+                    <ellipse cx="95" cy="55" rx="3" ry="4" fill="rgba(255,255,255,0.9)"/>
+                    <ellipse cx="92" cy="52" rx="1.5" ry="1.5" fill="rgba(255,255,255,0.7)"/>
+                </g>
             </g>
         </svg>
         <!-- Left Eyebrow -->
@@ -517,23 +522,27 @@
 
             <!-- Green iris -->
             <g class="iris" mask="url(#eyeWhiteMaskRight-${setId})">
-                <!-- Base iris with color-changing gradient -->
-                <ellipse class="iris-main" cx="100" cy="60" rx="35" ry="35" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
-                <!-- Overlapping gradient clouds for texture -->
-                <ellipse cx="95" cy="55" rx="28" ry="28" fill="url(#irisGradient1Right-${setId})" filter="url(#irisBlurRight-${setId})"/>
-                <ellipse cx="105" cy="58" rx="25" ry="25" fill="url(#irisGradient2Right-${setId})" filter="url(#irisBlurRight-${setId})"/>
-                <ellipse cx="100" cy="65" rx="22" ry="22" fill="url(#irisGradient3Right-${setId})" filter="url(#irisBlur2Right-${setId})"/>
-                <!-- Additional texture layers -->
-                <ellipse cx="92" cy="62" rx="15" ry="15" fill="url(#irisGradient1Right-${setId})" filter="url(#irisBlur2Right-${setId})" opacity="0.4"/>
-                <ellipse cx="108" cy="55" rx="18" ry="18" fill="url(#irisGradient2Right-${setId})" filter="url(#irisBlurRight-${setId})" opacity="0.5"/>
+                <g class="iris-content">
+                    <!-- Base iris with color-changing gradient -->
+                    <ellipse class="iris-main" cx="100" cy="60" rx="35" ry="35" fill="#228B22" stroke="#1F5F1F" stroke-width="1"/>
+                    <!-- Overlapping gradient clouds for texture -->
+                    <ellipse cx="95" cy="55" rx="28" ry="28" fill="url(#irisGradient1Right-${setId})" filter="url(#irisBlurRight-${setId})"/>
+                    <ellipse cx="105" cy="58" rx="25" ry="25" fill="url(#irisGradient2Right-${setId})" filter="url(#irisBlurRight-${setId})"/>
+                    <ellipse cx="100" cy="65" rx="22" ry="22" fill="url(#irisGradient3Right-${setId})" filter="url(#irisBlur2Right-${setId})"/>
+                    <!-- Additional texture layers -->
+                    <ellipse cx="92" cy="62" rx="15" ry="15" fill="url(#irisGradient1Right-${setId})" filter="url(#irisBlur2Right-${setId})" opacity="0.4"/>
+                    <ellipse cx="108" cy="55" rx="18" ry="18" fill="url(#irisGradient2Right-${setId})" filter="url(#irisBlurRight-${setId})" opacity="0.5"/>
+                </g>
             </g>
 
             <!-- Black pupil -->
             <g class="iris" mask="url(#eyeWhiteMaskRight-${setId})">
-                <ellipse cx="100" cy="60" rx="15" ry="15" fill="#000"/>
-                <!-- Lens flare inside pupil -->
-                <ellipse cx="95" cy="55" rx="3" ry="4" fill="rgba(255,255,255,0.9)"/>
-                <ellipse cx="92" cy="52" rx="1.5" ry="1.5" fill="rgba(255,255,255,0.7)"/>
+                <g class="iris-content">
+                    <ellipse cx="100" cy="60" rx="15" ry="15" fill="#000"/>
+                    <!-- Lens flare inside pupil -->
+                    <ellipse cx="95" cy="55" rx="3" ry="4" fill="rgba(255,255,255,0.9)"/>
+                    <ellipse cx="92" cy="52" rx="1.5" ry="1.5" fill="rgba(255,255,255,0.7)"/>
+                </g>
             </g>
         </svg>
         <!-- Right Eyebrow -->
@@ -1047,12 +1056,14 @@
             if (!eyeSet) return;
 
             const { x = 0, y = 0, duration = 1.5 } = params;
-            const irises = eyeSet.element.querySelectorAll('.iris');
+            // Try iris-content first (for regular eyes with masks), fall back to iris (for spider eyes)
+            const irisContents = eyeSet.element.querySelectorAll('.iris-content');
+            const irises = irisContents.length > 0 ? irisContents : eyeSet.element.querySelectorAll('.iris');
 
             // Update CSS transition duration
-            irises.forEach(iris => {
-                iris.style.transition = `transform ${duration}s ease-out`;
-                iris.style.transform = `translate(${x}px, ${y}px)`;
+            irises.forEach(irisElement => {
+                irisElement.style.transition = `transform ${duration}s ease-out`;
+                irisElement.style.transform = `translate(${x}px, ${y}px)`;
             });
 
             // Subtly move eyebrows to follow iris movement
@@ -1166,19 +1177,19 @@
             if (!eyeSet) return;
 
             const { intensity = 0.5, duration = 0.8 } = params;
-            const leftEyeIrises = eyeSet.element.querySelectorAll('svg:first-child .iris');
-            const rightEyeIrises = eyeSet.element.querySelectorAll('svg:last-child .iris');
+            const leftEyeIrisContents = eyeSet.element.querySelectorAll('svg:first-child .iris-content');
+            const rightEyeIrisContents = eyeSet.element.querySelectorAll('svg:last-child .iris-content');
 
             const crossAmount = 40 * intensity; // Max 40px inward movement
 
-            leftEyeIrises.forEach(iris => {
-                iris.style.transition = `transform ${duration}s ease-out`;
-                iris.style.transform = `translate(${crossAmount}px, 0px)`;
+            leftEyeIrisContents.forEach(irisContent => {
+                irisContent.style.transition = `transform ${duration}s ease-out`;
+                irisContent.style.transform = `translate(${crossAmount}px, 0px)`;
             });
 
-            rightEyeIrises.forEach(iris => {
-                iris.style.transition = `transform ${duration}s ease-out`;
-                iris.style.transform = `translate(${-crossAmount}px, 0px)`;
+            rightEyeIrisContents.forEach(irisContent => {
+                irisContent.style.transition = `transform ${duration}s ease-out`;
+                irisContent.style.transform = `translate(${-crossAmount}px, 0px)`;
             });
         }
 
@@ -1188,11 +1199,11 @@
             if (!eyeSet) return;
 
             const { duration = 0.5 } = params;
-            const irises = eyeSet.element.querySelectorAll('.iris');
+            const irisContents = eyeSet.element.querySelectorAll('.iris-content');
 
-            irises.forEach(iris => {
-                iris.style.transition = `transform ${duration}s ease-out`;
-                iris.style.transform = 'translate(0px, 0px)';
+            irisContents.forEach(irisContent => {
+                irisContent.style.transition = `transform ${duration}s ease-out`;
+                irisContent.style.transform = 'translate(0px, 0px)';
             });
         }
 
@@ -1202,7 +1213,6 @@
             if (!eyeSet) return;
 
             const { direction = 'up', duration = 1.5 } = params;
-            const irises = eyeSet.element.querySelectorAll('.iris');
 
             // Define roll path (circular motion)
             const radius = 45;
@@ -1221,9 +1231,10 @@
                     const x = Math.cos(angle) * radius;
                     const y = Math.sin(angle) * radius * 0.3; // Elliptical for eye shape
 
-                    irises.forEach(iris => {
-                        iris.style.transition = `transform ${stepDuration}s linear`;
-                        iris.style.transform = `translate(${x}px, ${y}px)`;
+                    const irisContents = eyeSet.element.querySelectorAll('.iris-content');
+                    irisContents.forEach(irisContent => {
+                        irisContent.style.transition = `transform ${stepDuration}s linear`;
+                        irisContent.style.transform = `translate(${x}px, ${y}px)`;
                     });
                 }, i * stepDuration * 1000);
             }
@@ -1442,11 +1453,11 @@
                 const x = Math.cos(angle) * radiusX;
                 const y = Math.sin(angle) * radiusY;
 
-                // Apply transform to iris groups
-                const irisGroups = eyeSet.element.querySelectorAll('.iris');
-                irisGroups.forEach(iris => {
-                    iris.style.transform = `translate(${x}px, ${y}px)`;
-                    iris.style.transition = 'none'; // Disable CSS transitions for smooth frame-by-frame updates
+                // Apply transform to iris content groups
+                const irisContents = eyeSet.element.querySelectorAll('.iris-content');
+                irisContents.forEach(irisContent => {
+                    irisContent.style.transform = `translate(${x}px, ${y}px)`;
+                    irisContent.style.transition = 'none'; // Disable CSS transitions for smooth frame-by-frame updates
                 });
 
                 // Continue animation if not complete
@@ -1932,10 +1943,10 @@
                 const offsetX = Math.cos(angle) * distance;
                 const offsetY = Math.sin(angle) * distance * 0.2;
 
-                // Apply to iris elements
-                const irises = eyeSet.element.querySelectorAll('.iris');
-                irises.forEach(iris => {
-                    iris.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+                // Apply to iris content elements
+                const irisContents = eyeSet.element.querySelectorAll('.iris-content');
+                irisContents.forEach(irisContent => {
+                    irisContent.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
                 });
             });
 
@@ -2363,10 +2374,11 @@
                 const offsetX = Math.cos(angle) * distance;
                 const offsetY = Math.sin(angle) * distance;
 
-                // Apply to iris elements
-                const irises = eyeData.element.querySelectorAll('.iris');
-                irises.forEach(iris => {
-                    iris.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+                // Apply to iris content elements (or iris for spider eyes)
+                const irisContents = eyeData.element.querySelectorAll('.iris-content');
+                const irises = irisContents.length > 0 ? irisContents : eyeData.element.querySelectorAll('.iris');
+                irises.forEach(irisElement => {
+                    irisElement.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
                 });
             });
 
@@ -2583,15 +2595,17 @@
             const eyeData = spiderEyes[eyeId];
             if (!eyeData) return;
 
-            const irises = eyeData.element.querySelectorAll('.iris');
+            // Try iris-content first (for regular eyes with masks), fall back to iris (for spider eyes)
+            const irisContents = eyeData.element.querySelectorAll('.iris-content');
+            const irises = irisContents.length > 0 ? irisContents : eyeData.element.querySelectorAll('.iris');
 
             // Generate random position within eye bounds
             const randomX = (Math.random() - 0.5) * 2 * spiderEyeIrisMaxMovement;
             const randomY = (Math.random() - 0.5) * 2 * spiderEyeIrisMaxMovement;
 
             // Apply movement to all iris groups
-            irises.forEach(iris => {
-                iris.style.transform = `translate(${randomX}px, ${randomY}px)`;
+            irises.forEach(irisElement => {
+                irisElement.style.transform = `translate(${randomX}px, ${randomY}px)`;
             });
 
             // Schedule next movement (only if not in tracking mode)
@@ -2899,7 +2913,7 @@
             const eyeSet = eyeSets[setIndex];
             if (!eyeSet || !eyeSet.visible) return;
 
-            const irises = eyeSet.element.querySelectorAll('.iris');
+            const irisContents = eyeSet.element.querySelectorAll('.iris-content');
 
             // Generate random position within eye bounds
             const maxX = 50; // Maximum horizontal movement
@@ -2907,9 +2921,9 @@
             const randomX = (Math.random() - 0.5) * 2 * maxX; // -50 to 50
             const randomY = (Math.random() - 0.5) * 2 * maxY; // -10 to 10
 
-            // Apply movement to all iris groups (iris, pupil, lens flare)
-            irises.forEach(iris => {
-                iris.style.transform = `translate(${randomX}px, ${randomY}px)`;
+            // Apply movement to all iris content groups (iris, pupil, lens flare)
+            irisContents.forEach(irisContent => {
+                irisContent.style.transform = `translate(${randomX}px, ${randomY}px)`;
             });
 
             // Subtly move eyebrows to follow iris movement
