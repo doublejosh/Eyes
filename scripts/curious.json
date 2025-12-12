@@ -1,0 +1,67 @@
+{
+  "scriptId": "curious",
+  "name": "Curious Eyes",
+  "description": "Wide eyes with darting looks",
+  "duration": 5.0,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "setColor",
+      "params": { "color": "#00FA9A" }
+    },
+    {
+      "time": 0.0,
+      "action": "archBrow",
+      "params": { "side": "right", "height": -12, "duration": 0.3 }
+    },
+    {
+      "time": 0.5,
+      "action": "dart",
+      "params": { "direction": "up", "duration": 0.15 }
+    },
+    {
+      "time": 0.5,
+      "action": "raiseBrows",
+      "params": { "height": -8, "duration": 0.2 }
+    },
+    {
+      "time": 1.0,
+      "action": "dart",
+      "params": { "direction": "left", "duration": 0.15 }
+    },
+    {
+      "time": 1.2,
+      "action": "archBrow",
+      "params": { "side": "left", "height": -10, "duration": 0.3 }
+    },
+    {
+      "time": 1.5,
+      "action": "dart",
+      "params": { "direction": "right", "duration": 0.15 }
+    },
+    {
+      "time": 1.7,
+      "action": "archBrow",
+      "params": { "side": "right", "height": -10, "duration": 0.3 }
+    },
+    {
+      "time": 2.0,
+      "action": "dart",
+      "params": { "direction": "down", "duration": 0.15 }
+    },
+    {
+      "time": 2.5,
+      "action": "moveIris",
+      "params": { "x": 0, "y": 0, "duration": 0.3 }
+    },
+    {
+      "time": 3.0,
+      "action": "blink"
+    },
+    {
+      "time": 4.0,
+      "action": "relaxBrows",
+      "params": { "duration": 0.5 }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "scriptId": "orbit",
+  "name": "Orbit Eyes",
+  "description": "Irises roll around the edges like a ball in a container",
+  "duration": 5.5,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "orbitIris",
+      "params": {
+        "duration": 1.2,
+        "clockwise": true,
+        "radiusX": 50,
+        "radiusY": 10,
+        "revolutions": 3
+      }
+    },
+    {
+      "time": 3.8,
+      "action": "moveIris",
+      "params": { "x": 0, "y": 0, "duration": 0.8 }
+    },
+    {
+      "time": 4.8,
+      "action": "blink"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "scriptId": "angry",
+  "name": "Angry Eyes",
+  "description": "Narrow eyes with sharp movements",
+  "duration": 5.0,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "fadeColor",
+      "params": { "fromColor": "#FF4500", "toColor": "#8B0000", "duration": 0.8 }
+    },
+    {
+      "time": 0.0,
+      "action": "furrowBrows",
+      "params": { "angle": 25, "height": 10, "duration": 0.3 }
+    },
+    {
+      "time": 0.0,
+      "action": "squint",
+      "params": { "intensity": 0.5, "duration": 0.3 }
+    },
+    {
+      "time": 0.5,
+      "action": "dart",
+      "params": { "direction": "left", "duration": 0.15 }
+    },
+    {
+      "time": 1.0,
+      "action": "dart",
+      "params": { "direction": "right", "duration": 0.15 }
+    },
+    {
+      "time": 1.5,
+      "action": "moveIris",
+      "params": { "x": 0, "y": 0, "duration": 0.2 }
+    },
+    {
+      "time": 2.0,
+      "action": "shake",
+      "params": { "intensity": 0.4, "duration": 0.5, "frequency": 8 }
+    },
+    {
+      "time": 2.0,
+      "action": "furrowBrows",
+      "params": { "angle": 30, "height": 12, "duration": 0.3 }
+    },
+    {
+      "time": 3.0,
+      "action": "furrowBrows",
+      "params": { "angle": 25, "height": 10, "duration": 0.3 }
+    },
+    {
+      "time": 3.5,
+      "action": "blink"
+    },
+    {
+      "time": 4.5,
+      "action": "relaxBrows",
+      "params": { "duration": 0.3 }
+    }
+  ]
+}

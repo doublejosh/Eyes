@@ -1,0 +1,80 @@
+{
+  "scriptId": "rainbow",
+  "name": "Rainbow Eyes",
+  "description": "Eyes cycle through vibrant random colors",
+  "duration": 8.0,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "setColor",
+      "params": { "color": "#FF0000" }
+    },
+    {
+      "time": 0.5,
+      "action": "fadeColor",
+      "params": { "fromColor": "#FF0000", "toColor": "#FF7F00", "duration": 0.5 }
+    },
+    {
+      "time": 1.0,
+      "action": "fadeColor",
+      "params": { "fromColor": "#FF7F00", "toColor": "#FFFF00", "duration": 0.5 }
+    },
+    {
+      "time": 1.5,
+      "action": "fadeColor",
+      "params": { "fromColor": "#FFFF00", "toColor": "#00FF00", "duration": 0.5 }
+    },
+    {
+      "time": 2.0,
+      "action": "blink"
+    },
+    {
+      "time": 2.5,
+      "action": "fadeColor",
+      "params": { "fromColor": "#00FF00", "toColor": "#0000FF", "duration": 0.5 }
+    },
+    {
+      "time": 3.0,
+      "action": "fadeColor",
+      "params": { "fromColor": "#0000FF", "toColor": "#4B0082", "duration": 0.5 }
+    },
+    {
+      "time": 3.5,
+      "action": "fadeColor",
+      "params": { "fromColor": "#4B0082", "toColor": "#9400D3", "duration": 0.5 }
+    },
+    {
+      "time": 4.0,
+      "action": "blink"
+    },
+    {
+      "time": 4.5,
+      "action": "fadeColor",
+      "params": { "fromColor": "#9400D3", "toColor": "#FF1493", "duration": 0.5 }
+    },
+    {
+      "time": 5.0,
+      "action": "fadeColor",
+      "params": { "fromColor": "#FF1493", "toColor": "#00CED1", "duration": 0.5 }
+    },
+    {
+      "time": 5.5,
+      "action": "fadeColor",
+      "params": { "fromColor": "#00CED1", "toColor": "#FFD700", "duration": 0.5 }
+    },
+    {
+      "time": 6.0,
+      "action": "blink"
+    },
+    {
+      "time": 6.5,
+      "action": "fadeColor",
+      "params": { "fromColor": "#FFD700", "toColor": "#FF69B4", "duration": 0.5 }
+    },
+    {
+      "time": 7.0,
+      "action": "fadeColor",
+      "params": { "fromColor": "#FF69B4", "toColor": "#32CD32", "duration": 0.5 }
+    }
+  ]
+}

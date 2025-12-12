@@ -32,6 +32,13 @@ User controls
 - E/R: Gap wider/closer
 - Arrow keys: Move position (up/down/left/right)
 - Z: Toggle Spider Mode
+- T: Toggle tears (drips)
+- D: Toggle director (auto behavior orchestration)
+- M: Cycle director mode (passive/active/chaotic)
+- B: Cycle behavior mode (autonomous/tracking/scripted)
+- S: Cycle through available scripts
+- P: Play default script
+- Esc: Stop current script
 - Space: Toggle help
 
 Spider Mode
@@ -48,3 +55,33 @@ Spider Mode
 - Manual focal point control via arrow keys or gamepad left stick (100px/frame sensitivity, 0.15 deadzone)
 - Arrow keys and joystick activate manual control, resuming automatic movement after 5 seconds of no input
 - Hidden corner eyes (~35) excluded from JavaScript processing for better performance
+
+Scripted Behavior System
+- Each eye set can have three behavior modes:
+  - Autonomous: Random iris movement and blinking (default)
+  - Tracking: Eyes follow a moving focal point
+  - Scripted: Execute pre-defined animation scripts
+- Scripts are JSON files in the scripts/ directory defining timed sequences of actions
+- 13 built-in scripts:
+  - Expressions: surprise, cross_eyes, roll_eyes, sleepy, angry, curious, scared, confused, shifty
+  - Interactions: sync_blink, wave, conversation, dance
+- Action library includes: blink, moveIris, setScale, setGap, setPosition, crossEyes, rollEyes, widen, squint, lookAt, dart, shake, startDripping, and more
+- Scripts can trigger multi-eye interactions for coordinated animations
+- Scripts play once then return to autonomous behavior
+- Keyboard controls: B (cycle behavior), S (cycle scripts), P (play default), Esc (stop)
+
+Director System
+- Intelligent orchestration layer that automatically manages eye set behaviors
+- Three director modes:
+  - Passive: Subtle (80% autonomous, 10% tracking, 10% scripted)
+  - Active: Balanced (50% autonomous, 20% tracking, 30% scripted)
+  - Chaotic: Frequent (20% autonomous, 30% tracking, 50% scripted)
+- Probability-based behavior switching with configurable evaluation intervals
+- Weighted random script selection favors interaction scripts when multiple eyes are visible
+- Cooldown periods prevent excessive script triggering
+- Keyboard controls: D (toggle on/off), M (cycle modes)
+
+State Persistence
+- All eye set properties (position, scale, gap, visibility, behavior mode) saved to localStorage
+- Default script assignments persist across sessions
+- State automatically restored on page reload

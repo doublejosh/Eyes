@@ -1,0 +1,18 @@
+{
+  "scriptId": "roll_eyes",
+  "name": "Roll Eyes",
+  "description": "Classic eye roll gesture",
+  "duration": 2.3,
+  "timeline": [
+    {
+      "time": 0.0,
+      "action": "rollEyes",
+      "params": { "direction": "up", "duration": 1.5 }
+    },
+    {
+      "time": 1.8,
+      "action": "moveIris",
+      "params": { "x": 0, "y": 0, "duration": 0.3 }
+    }
+  ]
+}
